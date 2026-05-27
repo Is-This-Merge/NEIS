@@ -1,11 +1,11 @@
-import * from choi
-import * from kim
-import * from kwak
+from choi import * 
+from kim import * 
+from kwak import * 
 import random
 
 class Player():
     def __init__(self):
-        self.flamingoes = [flamingo1 = Flamingo(), flamingo2 = Flamingo(), flamingo3 = Flamingo()]
+        self.flamingoes = [Flamingo(), Flamingo(), Flamingo()]
         self.currentFlamingo = 0
         self.ball = Hedgehog()
         self.passedGoals = 0

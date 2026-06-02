@@ -12,7 +12,7 @@ class Player():
     def hit(self, strength, direction):
         self.flamingoes[self.currentFlamingo].hit(strength, direction)
         if strength == 100:
-            if random.random() < 0.03:
+            if random.random() < 0.005:
                 self.ball.runaway()
     def replaceFlamingo(self):
         self.currentFlamingo += 1
@@ -29,3 +29,17 @@ class GamePlayer(Player):
             curSoldier = int(input("병사의 index를 입력하세요(1부터 시작): "))
             toGoal = int(input("목적지 골대번호를 입력하세요: "))
             self.availableSoldiers[curSoldier].move(toGoal)
+
+class Queen(Player):
+    def __init__(self):
+        super().__init__()
+        self.movableSoldiers = []
+        self.mood = 0
+
+    def command(self):
+
+
+class Post(object):
+    def __init__(self):
+        super().__init__()
+

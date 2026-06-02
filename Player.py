@@ -11,7 +11,7 @@ class Player:
         self.passedGoals = 0
         self.match = match
     def hit(self, strength, direction):
-        self.flamingos[self.currentFlamingo].hit(strength, direction)
+        self.flamingos[self.currentFlamingo].hit(self.ball, strength, direction)
         if strength >= 85:
             if random.random() < 0.01:
                 self.ball.runaway()

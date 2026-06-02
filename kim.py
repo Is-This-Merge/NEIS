@@ -4,6 +4,9 @@ from kwak import *
 
 class Hedgehog:
     def __init__(self, radius, color, location):
+        # 사용 가능 여부
+        self.usuable=True
+
         # 위치
         self.location = location
 
@@ -56,6 +59,9 @@ class Hedgehog:
 
 class Flamingo:
     def __init__(self, maxDistance, stiffness):
+        # 사용 가능 여부
+        self.usualble=True
+
         # 체력
         self.hp = 100
 

@@ -1,4 +1,5 @@
-import choi, hong, kim, kwak
+import CroquetMatch
 
 if __name__=="__main__":
-    mainMatch = choi.CroquetMatch()
+    mainMatch = CroquetMatch()
+    mainMatch.run()

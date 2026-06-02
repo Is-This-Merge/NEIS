@@ -1,7 +1,4 @@
-class Object:
-    def __init__(self, usable=True):
-        self.usable = usable
-
+import Object
 
 class Soldier(Object):
     def __init__(self, cooldown=0, usable=True, assignedGoal=None, match=None):
@@ -24,11 +21,3 @@ class Soldier(Object):
             return
         self.assignedGoal = destination
         self.match.goalposts[destination].addSolider(self)
-
-
-class Goalpost(Object):
-    def __init__(self, location=(0, 0), order=1, soldiers=None, usable=True):
-        super().__init__(usable)
-        self.location = location
-        self.order = order
-        self.soldiers = soldiers if soldiers is not None else []

@@ -3,7 +3,7 @@ from kim import *
 from kwak import * 
 import random
 
-class Player():
+class Player:
     def __init__(self):
         self.flamingoes = [Flamingo(), Flamingo(), Flamingo()]
         self.currentFlamingo = 0
@@ -37,7 +37,7 @@ class Queen(Player):
         self.mood = 0
 
     def command(self):
-
+        pass
 
 class Post(object):
     def __init__(self):

@@ -1,13 +1,21 @@
+from choi import *
+from hong import *
+from kwak import *
+import random
+
 class Hedgehog:
-    def __init__(self, location):
+    def __init__(self, radius, color, location):
         # 위치
         self.location = location
 
-        # 속도
-        self.velocity = 0
+        # 반지름
+        self.radius=radius
 
-        # 운동 방향
-        # self.motion.velocity = "stop"
+        #색깔
+        self.color=color
+
+        # 속도
+        self.velocity=(0,0)
 
         # 뾰족한 정도
         self.__sharpness = 50
@@ -22,10 +30,10 @@ class Hedgehog:
         if self.__roundness > 100:
             self.__roundness = 100
             print("고슴도치를 더 이상 둥글게 할 수 없습니다.")
-            print("현재 둥근 정도:0")
+            print("현재 둥근 정도:100/100")
         else:
-            print("고슴도치가 더 둥글어졌습니다.")
-            print(f"현재 둥근 정도:{self.__roundness}")
+            print("고슴도치가 10 만큼 더 둥글어졌습니다.")
+            print(f"현재 둥근 정도:{self.__roundness}/100")
 
     # 털 눕히기
     def dullify(self):
@@ -34,11 +42,11 @@ class Hedgehog:
         if self.__sharpness < 0:
             self.__sharpness = 0
             print("고슴도치 털을 더 이상 눕힐 수 없습니다.")
-            print("현재 뾰족한 정도:0")
+            print("현재 뾰족한 정도:0/100")
 
         else: 
-            print("고슴도치 털이 10만큼 눕혀졌습니다.")
-            print(f"현재 뾰족한 정도:{self.__sharpness}")
+            print("고슴도치 털이 10 만큼 더 눕혀졌습니다.")
+            print(f"현재 뾰족한 정도:{self.__sharpness}/100")
 
     # 굴러가기
     def roll(self, distance):
@@ -59,15 +67,15 @@ class Hedgehog:
 
 
 class Flamingo:
-    def __init__(self, hp, maxDistance):
+    def __init__(self, maxDistance, stiffness):
         # 체력
-        self.hp = hp
+        self.hp = 100
 
         # 최대 공격 거리
         self.maxDistance = maxDistance
 
         # 뻣뻣한 정도
-        self.__stiffness = 50
+        self.__stiffness = stiffness
 
     # 고슴도치 치기
     def hit(self, hedgehog, power):
@@ -80,13 +88,7 @@ class Flamingo:
         hedgehog.roll(power)
 
         # 홍학 체력 감소
-        self.hp -= 5
+        self.hp -= 10
 
         if self.hp < 0:
             self.hp = 0
-
-    # 사용 당하기
-    def used(self):
-        self.__stiffness += 5
-
-        print("홍학이 사용되어 더 뻣뻣해졌습니다.")

@@ -1,6 +1,4 @@
-from choi import *
 from hong import *
-from kwak import *
 
 class Hedgehog:
     def __init__(self, radius, color, location):
@@ -50,6 +48,9 @@ class Hedgehog:
             print("고슴도치 털이 10 만큼 더 눕혀졌습니다.")
             print(f"현재 뾰족한 정도:{self.__sharpness}/100")
 
+    # 위치 이동
+    def roll
+
 
     # 도망가기
     def runaway(self):
@@ -72,17 +73,15 @@ class Flamingo:
         self.__stiffness = stiffness
 
     # 고슴도치 치기
-    def hit(self, hedgehog, power):
-        # power가 최대 거리보다 크면 제한
-        if power > self.maxDistance:
-            power = self.maxDistance
+    def hit(self, strength, direction):
 
         print("홍학이 고슴도치를 쳤습니다!")
 
-        hedgehog.roll(power)
+        # 고슴고치 굴러 가야 하는데.........................................
 
         # 홍학 체력 감소
         self.hp -= 10
 
         if self.hp < 0:
-            self.hp = 0
+            self.usualble=False
+

@@ -1,4 +1,4 @@
-from hong import * 
+from hong import *
 from kim import * 
 from kwak import * 
 import random

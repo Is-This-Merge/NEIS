@@ -46,13 +46,6 @@ class CroquetMatch:
             28
         )
 
-        self.players = [
-            GamePlayer(self),
-            Queen(self)
-        ]
-
-        self.currentBall = self.players[0].ball
-
         self.post = Post()
 
         self.goalpostsNum = 8
@@ -69,6 +62,13 @@ class CroquetMatch:
         self.start_mouse = None
 
         self.create_map()
+
+        self.players = [
+            GamePlayer(self),
+            Queen(self)
+        ]
+
+        self.currentBall = self.players[0].ball
 
     def create_map(self):
 

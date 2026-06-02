@@ -1,6 +1,6 @@
 from choi import * 
-from kim import * 
 from kwak import * 
+from kim import * 
 import random
 
 class Player:
@@ -37,7 +37,8 @@ class Queen(Player):
         self.mood = 0
 
     def command(self):
-        pass
+        for _ in random.randint(0, min(3, len(self.movableSoldiers))):
+            i = random.randrange(0, len(self.movableSoldiers))
 
 class Post(object):
     def __init__(self):

@@ -1,4 +1,4 @@
-import Player
+from Player import Player
 
 class GamePlayer(Player):
     def __init__(self, match):

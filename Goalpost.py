@@ -1,4 +1,4 @@
-import Object
+from Object import Object
 
 class Goalpost(Object):
     def __init__(self, location=(0, 0), order=1, soldiers=None, usable=True):

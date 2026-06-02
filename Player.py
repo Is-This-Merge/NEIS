@@ -1,4 +1,5 @@
-import Flamingo, Hedgehog
+from Flamingo import Flamingo
+from Hedgehog import Hedgehog
 
 import random
 

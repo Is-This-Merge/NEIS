@@ -1,4 +1,4 @@
-import Object
+from Object import Object
 
 class Hedgehog(Object):
     def __init__(self, radius, color, location):

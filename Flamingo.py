@@ -14,14 +14,20 @@ class Flamingo(Object):
         self.__stiffness = stiffness
 
     # 고슴도치 치기
-    def hit(self, strength, direction):
+    def hit(self, hedgehog, strength, direction):
 
-        print("홍학이 고슴도치를 쳤습니다!")
+        current_x, current_y = hedgehog.location
+        dir_x, dir_y = direction
 
-        # 고슴고치 굴러 가야 하는데.........................................
+        new_x = current_x + (dir_x * strength)
+        new_y = current_y + (dir_y * strength)
+
+        hedgehog.location = (new_x, new_y)
+
+        print(f"고슴도치가 굴러갔습니다! 새로운 위치: {hedgehog.location}")
 
         # 홍학 체력 감소
         self.hp -= 10
 
         if self.hp < 0:
-            self.usualble=False
+            self.usuable=False

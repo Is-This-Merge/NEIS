@@ -17,5 +17,4 @@ class GamePlayer(Player):
         else:
             print("배치 가능한 병사 리스트:\n", self.availableSoldiers)
             curSoldier = int(input("병사의 index를 입력하세요(1부터 시작): "))
-            toGoal = int(input("목적지 골대번호를 입력하세요: "))
-            self.availableSoldiers[curSoldier].move(toGoal)
+            self.availableSoldiers[curSoldier-1].move(int(input("목적지 골대번호를 입력하세요: ")))

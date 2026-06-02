@@ -13,7 +13,7 @@ class Player:
     def hit(self, strength, direction):
         self.flamingos[self.currentFlamingo].hit(strength, direction)
         if strength >= 85:
-            if random.random() < 0.005:
+            if random.random() < 0.01:
                 self.ball.runaway()
     def replaceFlamingo(self):
         self.currentFlamingo += 1

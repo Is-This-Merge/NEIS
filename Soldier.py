@@ -1,4 +1,4 @@
-import Object
+from Object import Object
 
 class Soldier(Object):
     def __init__(self, cooldown=0, usable=True, assignedGoal=None, match=None):

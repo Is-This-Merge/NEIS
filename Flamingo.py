@@ -1,7 +1,8 @@
-class Flamingo:
+from Object import Object
+
+class Flamingo(Object):
     def __init__(self, maxDistance, stiffness):
-        # 사용 가능 여부
-        self.usualble=True
+        super().__init__()
 
         # 체력
         self.hp = 100

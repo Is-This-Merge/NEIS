@@ -1,4 +1,8 @@
-import GamePlayer, Goalpost, Soldier, Post, Queen
+from GamePlayer import GamePlayer
+from Goalpost import Goalpost
+from Soldier import Soldier
+from Post import Post
+from Queen import Queen
 
 import pygame
 import random

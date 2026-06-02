@@ -4,10 +4,11 @@ class Object:
 
 
 class Soldier(Object):
-    def __init__(self, cooldown=0, usable=True, assignedGoal=None):
+    def __init__(self, cooldown=0, usable=True, assignedGoal=None, match=None):
         super().__init__(usable)
         self.cooldown = cooldown
         self.assignedGoal = assignedGoal
+        self.match = match
 
     def execute_queen_command(self):
         if self.usable:
@@ -22,9 +23,7 @@ class Soldier(Object):
             print("현재 카드 병사를 사용할 수 없는 상태(usable=False)입니다.")
             return
         self.assignedGoal = destination
-        #destination번 골대를 임시로 goal이라 지칭하겠음
-        goal.addSoldier(self)
-        print(f"카드 병사가 {destination}번 골대를 구성하기 위해 {goal.location} 좌표로 이동 중입니다...")
+        self.match.goalposts[destination].addSolider(self)
 
 
 class Goalpost(Object):

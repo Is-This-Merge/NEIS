@@ -1,17 +1,17 @@
-from choi import * 
-from kwak import * 
-from kim import * 
+from kim import *
+from choi import *
+from kwak import *
 import random
 
 class Player:
     def __init__(self, match):
-        self.flamingoes = [Flamingo(random.randint(30, 50), random.randint(70, 100)), Flamingo(random.randint(30, 50), random.randint(70, 100)), Flamingo(random.randint(30, 50), random.randint(70, 100))]
+        self.flamingos = [Flamingo(random.randint(30, 50), random.randint(70, 100)), Flamingo(random.randint(30, 50), random.randint(70, 100)), Flamingo(random.randint(30, 50), random.randint(70, 100))]
         self.currentFlamingo = 0
         self.ball = Hedgehog()
         self.passedGoals = 0
         self.match = match
     def hit(self, strength, direction):
-        self.flamingoes[self.currentFlamingo].hit(strength, direction)
+        self.flamingos[self.currentFlamingo].hit(strength, direction)
         if strength >= 85:
             if random.random() < 0.005:
                 self.ball.runaway()
@@ -41,7 +41,7 @@ class Queen(Player):
                 if soldier not in self.movableSoldiers:
                     self.movableSoldiers.append(soldier)
     def hit(self, strength, direction):
-        self.flamingoes[self.currentFlamingo].hit(strength, direction)
+        self.flamingos[self.currentFlamingo].hit(strength, direction)
     def command(self):
         for soldier in self.match.soldiers:
             if soldier.assignedGoal is not None:
@@ -50,7 +50,6 @@ class Queen(Player):
         for _ in range(random.randint(0, min(4, len(self.movableSoldiers)))):
             i = random.randrange(0, len(self.movableSoldiers))
             self.movableSoldiers[i].execute_queen_command()
-
 
 class Post(object):
     def __init__(self):

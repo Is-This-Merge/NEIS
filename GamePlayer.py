@@ -1,10 +1,17 @@
-import Player
+from Player import Player
 
 class GamePlayer(Player):
     def __init__(self, match):
         super().__init__(match)
         self.availableSoldiers = []
+        for soldier in self.match.soldiers:
+            if soldier.assignedGoal is None:
+                self.availableSoldiers.append(soldier)
     def soldierArrange(self):
+        for soldier in self.match.soldiers:
+            if soldier.assignedGoal is None:
+                if soldier not in self.availableSoldiers:
+                    self.availableSoldiers.append(soldier)
         if self.availableSoldiers == []:
             print("배치 가능한 병사가 없습니다.")
         else:

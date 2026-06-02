@@ -1,7 +1,6 @@
 from choi import *
 from hong import *
 from kwak import *
-import random
 
 class Hedgehog:
     def __init__(self, radius, color, location):
@@ -48,21 +47,10 @@ class Hedgehog:
             print("고슴도치 털이 10 만큼 더 눕혀졌습니다.")
             print(f"현재 뾰족한 정도:{self.__sharpness}/100")
 
-    # 굴러가기
-    def roll(self, distance):
-        self.velocity = distance
-
-        self.location += distance
-
-        self.motion = "rolling"
-
-        print(f"고슴도치가 {distance}만큼 굴러갔습니다.")
-        print(f"현재 위치: {self.location}")
-
 
     # 도망가기
     def runaway(self):
-        print("고슴도치가 달아났습니다.")
+        self.usuable=False
 
 
 

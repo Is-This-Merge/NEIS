@@ -22,10 +22,6 @@ class Flamingo(Object):
         new_x = current_x + (dir_x * strength)
         new_y = current_y + (dir_y * strength)
 
-        hedgehog.location = (new_x, new_y)
-
-        print(f"고슴도치가 굴러갔습니다! 새로운 위치: {hedgehog.location}")
-
         # 홍학 체력 감소
         self.hp -= 10
 

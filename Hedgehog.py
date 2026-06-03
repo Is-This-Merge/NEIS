@@ -3,23 +3,12 @@ from Object import Object
 class Hedgehog(Object):
     def __init__(self, radius, color, location):
         super().__init__()
-
-        # 위치
         self.location = location
-
-        # 반지름
         self.radius=radius
-
-        #색깔
         self.color=color
-
-        # 속도
         self.velocity=(0,0)
-
-        # 뾰족한 정도
+        self.speed=0
         self.__sharpness = 50
-
-        # 둥근 정도
         self.__roundness = 50
 
     # 둥글어지기

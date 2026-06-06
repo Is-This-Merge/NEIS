@@ -1,8 +1,10 @@
 from Object import Object
 
 class Flamingo(Object):
-    def __init__(self, maxDistance, stiffness):
+    match = None
+    def __init__(self, match, maxDistance, stiffness):
         super().__init__()
+        Flamingo.match = match
 
         # 체력
         self.hp = 100

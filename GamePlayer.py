@@ -49,7 +49,7 @@ class GamePlayer(Player):
                 hold_ratio = min(hold_time / self.match.max_hold_time, 1)
                 power = self.match.min_power + (self.match.max_power - self.match.min_power) * hold_ratio
 
-                self.match.swing_pending_velocity = (math.cos(angle) * power, math.sin(angle) * power)
+                self.match.swing_pending_velocity = (math.cos(angle) * power * (-3), math.sin(angle) * power * (-3))
                 self.match.swing_base_angle = angle
                 self.match.swing_start_time = pygame.time.get_ticks()
                 self.match.swing_hit_done = False

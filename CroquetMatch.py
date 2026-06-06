@@ -135,8 +135,8 @@ class CroquetMatch:
         bx, by = self.currentBall.location
         vx, vy = self.currentBall.velocity
 
-        bx -= vx
-        by -= vy
+        bx += vx
+        by += vy
         vx *= self.friction
         vy *= self.friction
 
@@ -251,24 +251,43 @@ class CroquetMatch:
             pygame.draw.circle(self.screen, self.colors["BLACK"], (x + int(2 * scale), y - int(3 * scale)), 1)
 
         def draw_top_ui():
-            # 왼쪽 위: 남은 홍학 수
-            left_panel = pygame.Rect(15, 15, 270, 88)
+            def get_flamingo_hp(flamingo):
+                return getattr(flamingo, "hp", getattr(flamingo, "HP", getattr(flamingo, "health", 100)))
+
+            def draw_hp_bar(x, y, hp, max_hp=100, width=55, height=8):
+                ratio = max(0, min(hp / max_hp, 1))
+                pygame.draw.rect(self.screen, self.colors["BLACK"], pygame.Rect(x, y, width, height), 1)
+                pygame.draw.rect(self.screen, self.colors["RED"], pygame.Rect(x + 1, y + 1, int((width - 2) * ratio), height - 2))
+
+            # 왼쪽 위: 홍학 HP
+            left_panel = pygame.Rect(15, 15, 315, 96)
             draw_panel(left_panel)
 
-            title = self.small_font.render("남은 홍학", True, self.colors["BLACK"])
+            title = self.small_font.render("홍학 HP", True, self.colors["BLACK"])
             self.screen.blit(title, (30, 22))
 
             labels = ["플레이어", "하트여왕"]
 
             for row, player in enumerate(self.players):
-                y = 58 + row * 25
+                y = 58 + row * 28
                 label_text = self.small_font.render(labels[row], True, self.colors["BLACK"])
                 self.screen.blit(label_text, (30, y - 12))
 
-                remaining = max(0, len(player.flamingos) - player.currentFlamingo)
+                for i, flamingo in enumerate(player.flamingos):
+                    icon_x = 125 + i * 58
+                    hp = get_flamingo_hp(flamingo)
 
-                for i in range(remaining):
-                    draw_flamingo_head_icon(130 + i * 28, y, 0.9)
+                    draw_flamingo_head_icon(icon_x, y - 2, 0.75)
+                    draw_hp_bar(icon_x + 18, y - 7, hp, 100, 34, 8)
+
+                    if i == player.currentFlamingo:
+                        pygame.draw.rect(
+                            self.screen,
+                            self.colors["BLACK"],
+                            pygame.Rect(icon_x - 11, y - 18, 61, 28),
+                            2,
+                            border_radius=4
+                        )
 
             # 위쪽 중앙: 현재 턴
             center_panel_width = 220
@@ -285,14 +304,14 @@ class CroquetMatch:
             self.screen.blit(player_text, player_text.get_rect(center=(self.width // 2, 61)))
 
             # 오른쪽 위: 각자의 목표 골대
-            right_panel = pygame.Rect(self.width - 290, 15, 275, 88)
+            right_panel = pygame.Rect(self.width - 290, 15, 275, 96)
             draw_panel(right_panel)
 
             title = self.small_font.render("현재 목표 골대", True, self.colors["BLACK"])
             self.screen.blit(title, (self.width - 275, 22))
 
             for row, player in enumerate(self.players):
-                y = 58 + row * 25
+                y = 58 + row * 28
 
                 if player.passedGoals >= len(self.goalposts):
                     goal_text = "완료"
@@ -302,7 +321,10 @@ class CroquetMatch:
                 label_text = self.small_font.render(f"{labels[row]} : {goal_text}", True, self.colors["BLACK"])
                 self.screen.blit(label_text, (self.width - 275, y - 12))
 
-            # 승리 문구
+                # 플레이어 색깔 표시용 작은 원
+                pygame.draw.circle(self.screen, player.ball.color, (self.width - 50, y - 2), 8)
+                pygame.draw.circle(self.screen, self.colors["BLACK"], (self.width - 50, y - 2), 8, 2)
+
             if self.isGameOver:
                 winner_name = "플레이어" if self.winner == self.players[0] else "하트여왕"
                 win_text = self.font.render(f"{winner_name} 승리!", True, self.colors["BLACK"])
@@ -312,54 +334,8 @@ class CroquetMatch:
                 pygame.draw.rect(self.screen, self.colors["BLACK"], win_rect.inflate(30, 18), 2, border_radius=8)
                 self.screen.blit(win_text, win_rect)
 
-        def draw_hedgehog_ball(player):
-            x, y = player.ball.location
-            player.ball.speed = math.hypot(*player.ball.velocity)
-            r = player.ball.radius
-
-            if player == self.currentPlayer and not self.isGameOver:
-                time = pygame.time.get_ticks() / 250
-                pulse = (math.sin(time) + 1) / 2
-                highlight_radius = r + 4 + int(pulse * 6)
-
-                pygame.draw.circle(self.screen, self.colors["YELLOW"], (int(x), int(y)), highlight_radius, 3)
-                pygame.draw.circle(self.screen, self.colors["BLACK"], (int(x), int(y)), highlight_radius + 3, 1)
-
-            if player.ball.speed < 0.2:
-                # 정지 상태: 고슴도치 모양
-                pygame.draw.ellipse(self.screen, player.ball.color, pygame.Rect(x - r, y - r + 2, r * 2, r + 8))
-                pygame.draw.circle(self.screen, player.ball.color, (int(x + r * 0.65), int(y - r * 0.15)), max(4, r // 2))
-
-                # 가시
-                for i in range(-3, 4):
-                    sx = x - r * 0.8 + i * r * 0.28
-                    pygame.draw.line(
-                        self.screen,
-                        self.colors["BLACK"],
-                        (int(sx), int(y - r * 0.4)),
-                        (int(sx - 5), int(y - r * 0.9)),
-                        2
-                    )
-
-                # 눈, 코
-                pygame.draw.circle(self.screen, self.colors["BLACK"], (int(x + r * 0.75), int(y - r * 0.3)), 2)
-                pygame.draw.circle(self.screen, self.colors["BLACK"], (int(x + r * 1.12), int(y - r * 0.1)), 2)
-
-                pygame.draw.ellipse(self.screen, self.colors["BLACK"], pygame.Rect(x - r, y - r + 2, r * 2, r + 8), 2)
-            else:
-                # 이동 상태: 몸을 둥글게 만 모습
-                pygame.draw.circle(self.screen, player.ball.color, (int(x), int(y)), r)
-                pygame.draw.circle(self.screen, self.colors["BLACK"], (int(x), int(y)), r, 2)
-
-                spin = pygame.time.get_ticks() / 120
-
-                for i in range(3):
-                    angle = spin + i * 2.1
-                    sx = int(x + math.cos(angle) * r * 0.35)
-                    sy = int(y + math.sin(angle) * r * 0.35)
-                    pygame.draw.circle(self.screen, self.colors["BLACK"], (sx, sy), 2)
-
         def draw_goalpost(goalpost, active=False):
+
             x, y = goalpost.location
             soldier_color = self.colors["WHITE"]
             line_color = self.colors["BLACK"]
@@ -368,13 +344,6 @@ class CroquetMatch:
             right_soldier_x = x + 20
             soldier_top_y = y - 35
             soldier_bottom_y = y + 35
-
-            if active:
-                pygame.draw.polygon(
-                    self.screen,
-                    self.colors["BLACK"],
-                    [(x, y - 65), (x - 10, y - 48), (x + 10, y - 48)]
-                )
 
             # 왼쪽 카드병정
             pygame.draw.rect(self.screen, soldier_color, pygame.Rect(left_soldier_x - 5, soldier_top_y, 10, 70))
@@ -395,6 +364,29 @@ class CroquetMatch:
             number_text = self.small_font.render(str(goalpost.order), True, self.colors["BLACK"])
             number_rect = number_text.get_rect(center=(x, y + 55))
             self.screen.blit(number_text, number_rect)
+
+        def draw_goal_markers():
+                time = pygame.time.get_ticks() / 300
+                bob = math.sin(time) * 6
+
+                for player in self.players:
+                    if player.passedGoals >= len(self.goalposts):
+                        continue
+
+                    goalpost = self.goalposts[player.passedGoals]
+                    x, y = goalpost.location
+
+                    marker_y = y - 72 + bob
+                    color = player.ball.color
+
+                    points = [
+                        (x, marker_y + 18),
+                        (x - 12, marker_y),
+                        (x + 12, marker_y)
+                    ]
+
+                    pygame.draw.polygon(self.screen, color, points)
+                    pygame.draw.polygon(self.screen, self.colors["BLACK"], points, 2)
 
         def draw_flamingo_handle():
             bx, by = self.currentBall.location
@@ -538,17 +530,34 @@ class CroquetMatch:
             # 눈
             pygame.draw.circle(self.screen, self.colors["BLACK"], eye, 2)
 
-            # 힘 게이지
             if self.charging:
                 hold_time = pygame.time.get_ticks() - self.mouse_down_time
                 hold_ratio = min(hold_time / self.max_hold_time, 1)
 
-                bar_x, bar_y = 20, 103
-                bar_width, bar_height = 160, 14
+                bar_width, bar_height = 54, 8
+                bar_x = body_center[0] - bar_width // 2
+                bar_y = body_center[1] - 28
                 fill_width = int(bar_width * hold_ratio)
 
-                pygame.draw.rect(self.screen, self.colors["BLACK"], pygame.Rect(bar_x, bar_y, bar_width, bar_height), 2)
-                pygame.draw.rect(self.screen, self.colors["ORANGE"], pygame.Rect(bar_x, bar_y, fill_width, bar_height))
+                pygame.draw.rect(
+                    self.screen,
+                    self.colors["WHITE"],
+                    pygame.Rect(bar_x - 2, bar_y - 2, bar_width + 4, bar_height + 4),
+                    border_radius=4
+                )
+
+                pygame.draw.rect(
+                    self.screen,
+                    self.colors["BLACK"],
+                    pygame.Rect(bar_x, bar_y, bar_width, bar_height),
+                    1
+                )
+
+                pygame.draw.rect(
+                    self.screen,
+                    self.colors["ORANGE"],
+                    pygame.Rect(bar_x + 1, bar_y + 1, fill_width, bar_height - 2)
+                )
 
         # 전체 배경: UI 영역
         self.screen.fill(self.colors["UI_BG"])
@@ -565,7 +574,7 @@ class CroquetMatch:
         pygame.draw.rect(self.screen, self.colors["BLACK"], field_rect, 3)
 
         # 경기장 잔디 선
-        for x in range(0, self.field_width, 40):
+        for x in range(-120, self.field_width, 40):
             pygame.draw.line(
                 self.screen,
                 self.colors["DARK_GREEN"],
@@ -576,17 +585,18 @@ class CroquetMatch:
 
         # 공을 먼저 그림: 골대 뒤로 지나갈 수 있게 하기 위함
         for player in self.players:
-            draw_hedgehog_ball(player)
+            self.currentPlayer.ball.draw_hedgehog_ball(player)
 
         # 플레이어 차례에는 홍학 채를 표시
         if self.currentPlayer == self.players[0] and not self.isGameOver and self.currentPlayer.ball.speed == 0:
             draw_flamingo_handle()
 
         # 골문을 나중에 그림
-        target_goal = self.currentPlayer.passedGoals if not self.isGameOver else -1
+        for goalpost in self.goalposts:
+            draw_goalpost(goalpost)
 
-        for i, goalpost in enumerate(self.goalposts):
-            draw_goalpost(goalpost, active=(i == target_goal))
+        # 플레이어/하트여왕 목표 골대 표시
+        draw_goal_markers()
 
         # 상단 UI 표시
         draw_top_ui()

@@ -34,7 +34,7 @@ class GamePlayer(Player):
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 speed = math.hypot(*self.ball.velocity)
 
-                if speed < 0.5 and not self.match.isWin and not self.match.swinging:
+                if speed < 0.5 and not self.match.isGameOver and not self.match.swinging:
                     self.match.charging = True
                     self.match.mouse_down_time = pygame.time.get_ticks()
 
@@ -55,5 +55,12 @@ class GamePlayer(Player):
                 self.match.swing_hit_done = False
                 self.match.swinging = True
                 self.match.charging = False
+
+                self.flamingos[self.currentFlamingo].hit(self.ball, power)
+                if self.flamingos[self.currentFlamingo].usable == False:
+                    if self.currentFlamingo == len(self.flamingos) - 1:
+                        self.match.isGameOver = True
+                        self.match.winner = self.match.currentTurn % 2
+                    self.currentFlamingo += 1
 
         return True

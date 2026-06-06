@@ -8,7 +8,7 @@ class Hedgehog(Object):
         self.color=color
         self.velocity=(0,0)
         self.speed=0
-        self.__sharpness = 50
+        self.sharpness = 50
         self.__roundness = 50
 
     # 둥글어지기

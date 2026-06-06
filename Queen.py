@@ -29,7 +29,7 @@ class Queen(Player):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: return False
 
-        if self.match.turnStarted or self.match.isWin:
+        if self.match.turnStarted or self.match.isGameOver:
             return True
 
         self.command()

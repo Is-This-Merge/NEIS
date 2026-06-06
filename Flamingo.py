@@ -14,16 +14,10 @@ class Flamingo(Object):
         self.__stiffness = stiffness
 
     # 고슴도치 치기
-    def hit(self, hedgehog, strength, direction):
-
-        current_x, current_y = hedgehog.location
-        dir_x, dir_y = direction
-
-        new_x = current_x + (dir_x * strength)
-        new_y = current_y + (dir_y * strength)
+    def hit(self, hedgehog, strength):
 
         # 홍학 체력 감소
-        self.hp -= 10
+        self.hp -= hedgehog.sharpness * strength / 100 * (1 - self.__stiffness / 100)
 
         if self.hp < 0:
             self.usuable=False

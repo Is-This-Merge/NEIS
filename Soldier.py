@@ -18,4 +18,4 @@ class Soldier(Object):
             print("현재 카드 병사를 사용할 수 없는 상태(usable=False)입니다.")
             return
         self.assignedGoal = destination
-        self.match.goalposts[destination].addSolider(self)
+        self.match.goalposts[destination].addSoldier(self)

@@ -1,7 +1,6 @@
 from GamePlayer import GamePlayer
 from Goalpost import Goalpost
 from Soldier import Soldier
-from Post import Post
 from Queen import Queen
 
 import pygame, random, math
@@ -41,7 +40,6 @@ class CroquetMatch:
             "UI_BG": (230, 230, 220)
         }
 
-        self.post = Post()
         self.goalpostsNum = 8
         self.soldiersNum = 24
         self.goalposts = []
@@ -103,18 +101,13 @@ class CroquetMatch:
             return
 
         # 홍학 스윙 애니메이션 처리
+        flamingo = self.currentPlayer.get_current_flamingo()
 
-        if self.currentPlayer.flamingos[self.currentPlayer.currentFlamingo].swinging:
-            elapsed = pygame.time.get_ticks() - self.swing_start_time
-            progress = min(elapsed / self.currentPlayer.flamingos[self.currentPlayer.currentFlamingo].swing_duration, 1)
+        if flamingo is not None and flamingo.swinging:
+            hit_happened = flamingo.update_swing(self.currentBall)
 
-            if progress >= 0.55 and not self.swing_hit_done:
-                self.currentBall.velocity = self.swing_pending_velocity
+            if hit_happened:
                 self.turnStarted = True
-                self.swing_hit_done = True
-
-            if progress >= 1:
-                self.currentPlayer.flamingos[self.currentPlayer.currentFlamingo].swinging = False
 
         bx, by = self.currentBall.location
         vx, vy = self.currentBall.velocity
@@ -198,8 +191,12 @@ class CroquetMatch:
             self.currentBall.speed = 0
             self.turnStarted = False
             self.aiming = False
-            self.currentPlayer.flamingos[self.currentPlayer.currentFlamingo].charging = False
-            self.currentPlayer.flamingos[self.currentPlayer.currentFlamingo].swinging = False
+
+            flamingo = self.currentPlayer.get_current_flamingo()
+            if flamingo is not None:
+                flamingo.charging = False
+                flamingo.swinging = False
+
             self.currentTurn += 1
 
     def draw(self):
@@ -347,8 +344,12 @@ class CroquetMatch:
             self.currentPlayer.ball.draw_hedgehog_ball(player)
 
         # 플레이어 차례에는 홍학 채를 표시
-        if self.currentPlayer == self.players[0] and not self.isGameOver and self.currentPlayer.ball.speed == 0:
-            self.currentPlayer.flamingos[self.currentPlayer.currentFlamingo].draw_flamingo_handle(self.screen, self.currentPlayer.ball)
+        flamingo = self.currentPlayer.get_current_flamingo()
+        if (self.currentPlayer == self.players[0]
+                and not self.isGameOver
+                and flamingo is not None
+                and (self.currentPlayer.ball.speed == 0 or flamingo.charging or flamingo.swinging)):
+            flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
 
         # 골문을 나중에 그림
         for goalpost in self.goalposts:

@@ -37,6 +37,13 @@ class Queen(Player):
         if self.passedGoals >= len(self.match.goalposts):
             return True
 
+        flamingo = self.get_current_flamingo()
+
+        if flamingo is None or not flamingo.usable:
+            self.match.isGameOver = True
+            self.match.winner = self.match.players[0]
+            return True
+
         bx, by = self.ball.location
         gx, gy = self.match.goalposts[self.passedGoals].location
 
@@ -49,6 +56,13 @@ class Queen(Player):
 
         power = random.uniform(8, 14)
         self.ball.velocity = (dx / length * power, dy / length * power)
+
+        # 홍학을 통해 공을 쳐서 홍학 HP를 감소시킴
+        flamingo.hit(self.ball, power)
+
+        if not flamingo.usable:
+            self.replaceFlamingo()
+
         self.match.turnStarted = True
 
         return True

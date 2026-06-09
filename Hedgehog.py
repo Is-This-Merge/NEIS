@@ -16,7 +16,7 @@ class Hedgehog(Object):
 
     # 도망가기
     def runaway(self):
-        self.usuable=False
+        self.usable=False
 
     @classmethod
     def draw_hedgehog_ball(cls, player):

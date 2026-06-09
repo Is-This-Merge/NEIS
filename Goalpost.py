@@ -8,6 +8,10 @@ class Goalpost(Object):
         self.order = order
         self.soldiers = soldiers if soldiers is not None else []
 
+    def addSoldier(self, soldier):
+        if soldier not in self.soldiers:
+            self.soldiers.append(soldier)
+
     def draw_goalpost(self, screen):
         x, y = self.location
         soldier_color = (255, 255, 255)

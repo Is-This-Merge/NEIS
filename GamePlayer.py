@@ -1,52 +1,62 @@
-from Flamingo import Flamingo
-from Hedgehog import Hedgehog
+from Player import Player
 
-import random
+import pygame
+import math
 
 
-class Player:
-    def __init__(self, match, color, location):
-        self.match = match
-        self.flamingos = [
-            Flamingo(self.match, random.randint(30, 50), random.randint(70, 100), self),
-            Flamingo(self.match, random.randint(30, 50), random.randint(70, 100), self),
-            Flamingo(self.match, random.randint(30, 50), random.randint(70, 100), self)
-        ]
-        self.currentFlamingo = 0
-        self.ball = Hedgehog(self.match, random.randint(10, 20), color, location)
-        self.passedGoals = 0
+class GamePlayer(Player):
+    def __init__(self, match, location):
+        super().__init__(match, match.colors["BROWN"], location)
+        self.availableSoldiers = []
 
-    def get_current_flamingo(self):
-        if self.currentFlamingo >= len(self.flamingos):
-            return None
-        return self.flamingos[self.currentFlamingo]
+        for soldier in self.match.soldiers:
+            if soldier.assignedGoal is None:
+                self.availableSoldiers.append(soldier)
 
-    def has_usable_flamingo(self):
-        return any(flamingo.usable for flamingo in self.flamingos)
+    def soldierArrange(self):
+        for soldier in self.match.soldiers:
+            if soldier.assignedGoal is None and soldier not in self.availableSoldiers:
+                self.availableSoldiers.append(soldier)
 
-    def replaceFlamingo(self):
-        for i in range(self.currentFlamingo + 1, len(self.flamingos)):
-            if self.flamingos[i].usable:
-                self.currentFlamingo = i
-                return True
-
-        for i in range(0, self.currentFlamingo):
-            if self.flamingos[i].usable:
-                self.currentFlamingo = i
-                return True
-
-        return False
-
-    def hit(self, strength):
-        flamingo = self.get_current_flamingo()
-
-        if flamingo is None or not flamingo.usable:
+        if self.availableSoldiers == []:
+            print("배치 가능한 병사가 없습니다.")
             return
 
-        flamingo.hit(self.ball, strength)
+        print("배치 가능한 병사 리스트:\n", self.availableSoldiers)
+        curSoldier = int(input("병사의 index를 입력하세요(1부터 시작): "))
+        goalNum = int(input("목적지 골대번호를 입력하세요: "))
+        self.availableSoldiers[curSoldier - 1].move(goalNum)
 
-        if strength >= 85 and random.random() < 0.01:
-            self.ball.runaway()
+    def play(self):
+        flamingo = self.get_current_flamingo()
 
-        if not flamingo.usable:
-            self.replaceFlamingo()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+
+            if flamingo is None:
+                self.match.isGameOver = True
+                self.match.winner = self.match.players[1]
+                return True
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                speed = math.hypot(*self.ball.velocity)
+
+                if speed < 0.5 and not self.match.isGameOver and flamingo.usable and not flamingo.charging and not flamingo.swinging:
+                    flamingo.start_charge(self.ball)
+
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if flamingo.charging:
+                    strength = flamingo.release_charge(self.ball)
+
+                    if strength is not None:
+                        flamingo.hit(self.ball, strength)
+
+                        if not flamingo.usable:
+                            has_next = self.replaceFlamingo()
+
+                            if not has_next:
+                                self.match.isGameOver = True
+                                self.match.winner = self.match.players[1]
+
+        return True

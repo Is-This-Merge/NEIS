@@ -39,7 +39,6 @@ class Flamingo(Object):
         self.min_power = 2.5
         self.max_power = self.maxDistance * 0.12
 
-    # 고슴도치 치기
     def hit(self, hedgehog, strength):
         damage = hedgehog.sharpness * strength / 100 * (1 - self.__stiffness / 100)
         self.hp -= damage
@@ -47,10 +46,12 @@ class Flamingo(Object):
         if self.hp <= 0:
             self.hp = 0
             self.usable = False
+            self.charging = False
+            self.swinging = False
 
     def start_charge(self, ball):
         if not self.usable:
-            return
+            return False
 
         bx, by = ball.location
         mx, my = pygame.mouse.get_pos()
@@ -60,9 +61,11 @@ class Flamingo(Object):
         self.mouse_down_time = pygame.time.get_ticks()
         self.flamingo_charge_angle = math.atan2(my - by, mx - bx)
 
+        return True
+
     def release_charge(self, ball):
         if not self.charging or not self.usable:
-            return
+            return None
 
         hold_time = pygame.time.get_ticks() - self.mouse_down_time
         hold_ratio = min(hold_time / self.max_hold_time, 1)
@@ -70,9 +73,11 @@ class Flamingo(Object):
         power = self.min_power + (self.max_power - self.min_power) * hold_ratio
         angle = self.flamingo_charge_angle
 
+        # 현재 그림 구조상 홍학은 공의 마우스 방향 쪽에 서 있으므로,
+        # 공은 그 반대 방향으로 날아가게 함
         self.swing_pending_velocity = (
-            math.cos(angle) * power,
-            math.sin(angle) * power
+            -math.cos(angle) * power * 3,
+            -math.sin(angle) * power * 3
         )
 
         self.swing_base_angle = angle
@@ -80,6 +85,8 @@ class Flamingo(Object):
         self.swing_hit_done = False
         self.swinging = True
         self.charging = False
+
+        return power
 
     def update_swing(self, ball):
         if not self.swinging:
@@ -108,20 +115,17 @@ class Flamingo(Object):
         if math.hypot(dx, dy) == 0:
             dx, dy = 1, 0
 
-        # 공 → 마우스 방향
         aim_angle = math.atan2(dy, dx)
 
-        # 차징/스윙 중에는 처음 누른 방향을 고정
         if self.charging or self.swinging:
             aim_angle = self.flamingo_charge_angle
 
-        # 홍학은 공-마우스 선에 수직으로 서 있음
         stand_angle = aim_angle + math.pi / 2
 
         ux, uy = math.cos(stand_angle), math.sin(stand_angle)
         vx, vy = math.cos(aim_angle), math.sin(aim_angle)
 
-        # 공 옆에 머리가 아니라 발이 오도록 함
+        # 공 옆에는 홍학의 발이 오도록 함
         foot_origin_dist = ball.radius + 18
         foot_origin = (
             bx + vx * foot_origin_dist,
@@ -134,16 +138,16 @@ class Flamingo(Object):
                 foot_origin[1] + uy * a + vy * b
             )
 
-        # 기본 홍학 자세
-        foot1 = local(0, -4)
-        foot2 = local(2, 8)
-        knee1 = local(18, -3)
-        knee2 = local(16, 8)
+        # 기본 자세
+        foot1 = local(0, -5)
+        foot2 = local(2, 9)
+        knee1 = local(18, -4)
+        knee2 = local(17, 9)
 
         body_center = local(48, 1)
         neck_base = local(42, 0)
-        neck_mid = local(60, -8)
-        head_center = local(80, -10)
+        neck_mid = local(62, -8)
+        head_center = local(82, -10)
 
         def rotate_point(p, center, angle):
             px, py = p
@@ -156,7 +160,6 @@ class Flamingo(Object):
                 cy + rx * math.sin(angle) + ry * math.cos(angle)
             )
 
-        # 머리를 회전축으로 사용할 기울기
         tilt_angle = 0
 
         if self.charging:
@@ -173,7 +176,7 @@ class Flamingo(Object):
             end_tilt = -math.pi * 0.22
             tilt_angle = start_tilt + (end_tilt - start_tilt) * eased
 
-        # 머리는 고정하고, 나머지 부위를 머리 기준으로 회전
+        # 머리는 고정하고 나머지만 머리 기준으로 회전
         if self.charging or self.swinging:
             foot1 = rotate_point(foot1, head_center, tilt_angle)
             foot2 = rotate_point(foot2, head_center, tilt_angle)
@@ -257,7 +260,7 @@ class Flamingo(Object):
         # 눈
         pygame.draw.circle(screen, black, eye, 2)
 
-        # 차징 게이지: 홍학 옆
+        # 차징 게이지: 홍학 몸통 근처
         if self.charging:
             hold_time = pygame.time.get_ticks() - self.mouse_down_time
             hold_ratio = min(hold_time / self.max_hold_time, 1)

@@ -41,7 +41,7 @@ class CroquetMatch:
         }
 
         self.goalpostsNum = 8
-        self.soldiersNum = 24
+        self.soldiersNum = 16
         self.goalposts = []
         self.soldiers = []
 
@@ -77,18 +77,22 @@ class CroquetMatch:
             goalpost = Goalpost(location=location, order=i + 1)
             self.goalposts.append(goalpost)
 
-        # 모든 병사를 하나의 풀(self.soldiers)에서 관리
-        # 골대마다 2명씩 기본 배치 → 양쪽 기둥 형태로 시작
+        # 모든 병사를 골대에 배치 (예비 병사 없음)
+        # 우선 골대마다 2명씩 배치하고, 남는 병사는 골대에 골고루 추가 배치
         for goalpost in self.goalposts:
             for _ in range(2):
+                if len(self.soldiers) >= self.soldiersNum:
+                    break
                 soldier = Soldier(match=self)
                 soldier.assign(goalpost)
                 self.soldiers.append(soldier)
 
-        # 나머지는 예비 병사: 플레이어가 숫자키로 배치 가능
-        reserve = self.soldiersNum - len(self.soldiers)
-        for _ in range(max(0, reserve)):
-            self.soldiers.append(Soldier(match=self))
+        i = 0
+        while len(self.soldiers) < self.soldiersNum:
+            soldier = Soldier(match=self)
+            soldier.assign(self.goalposts[i % len(self.goalposts)])
+            self.soldiers.append(soldier)
+            i += 1
 
         self.center = (
             self.field_width // 2,
@@ -150,34 +154,21 @@ class CroquetMatch:
             vy *= -0.8
             by = max(top_bound + radius, min(bottom_bound - radius, by))
 
-        # 골대 충돌 판정: 카드병정의 밑동 부분에만 적용
-        # 병사가 2명 이상(양쪽 기둥 형태)인 골대에만 충돌 적용
+        # 골대 충돌 판정: 골대 형태(병사 수)에 따른 히트박스에 적용
+        # 2명 이상=양쪽 기둥, 1명=텐트 양다리(가운데는 통과 가능), 0명=충돌 없음
         for goalpost in self.goalposts:
-            if not goalpost.has_posts():
-                continue
-
-            gx, gy = goalpost.location
-
-            left_x = gx - 20
-            right_x = gx + 20
-            bottom_y = gy + 35
-
-            base_width = 14
-            base_height = 12
-
-            left_base = pygame.Rect(left_x - base_width // 2, bottom_y - base_height, base_width, base_height)
-            right_base = pygame.Rect(right_x - base_width // 2, bottom_y - base_height, base_width, base_height)
             ball_rect = pygame.Rect(bx - radius, by - radius, radius * 2, radius * 2)
 
-            if ball_rect.colliderect(left_base):
-                vx = -abs(vx) * 0.75 if bx < left_base.centerx else abs(vx) * 0.75
-                vy *= 0.85
-                bx = left_base.left - radius if bx < left_base.centerx else left_base.right + radius
-
-            elif ball_rect.colliderect(right_base):
-                vx = -abs(vx) * 0.75 if bx < right_base.centerx else abs(vx) * 0.75
-                vy *= 0.85
-                bx = right_base.left - radius if bx < right_base.centerx else right_base.right + radius
+            for base in goalpost.collision_rects():
+                if ball_rect.colliderect(base):
+                    if bx < base.centerx:
+                        vx = -abs(vx) * 0.75
+                        bx = base.left - radius
+                    else:
+                        vx = abs(vx) * 0.75
+                        bx = base.right + radius
+                    vy *= 0.85
+                    break
 
         self.currentBall.location = (bx, by)
         self.currentBall.velocity = (vx, vy)
@@ -192,7 +183,8 @@ class CroquetMatch:
         gx, gy = goalpost.location
         distance = math.hypot(bx - gx, by - gy)
 
-        if distance < 32:
+        # 병사가 한 명도 없는 빈 골대에는 골을 넣을 수 없음
+        if distance < 32 and len(goalpost.soldiers) >= 1:
             self.currentPlayer.passedGoals += 1
 
             if self.currentPlayer.passedGoals >= len(self.goalposts):
@@ -214,15 +206,19 @@ class CroquetMatch:
                 flamingo.swinging = False
 
             self.currentTurn += 1
-            self.check_goal_staffing()
+            self.refresh_soldiers()
 
-    def check_goal_staffing(self):
-        # 병사가 없는 골대가 2턴 이상 지속되면 플레이어 패배
+    def refresh_soldiers(self):
+        # 쿨다운이 끝난 병사를 다시 사용 가능 상태로 복귀
+        for soldier in self.soldiers:
+            soldier.update_cooldown(self.currentTurn)
+
+        # 병사가 없는 골대가 4턴 이상 지속되면 플레이어 패배
         for goalpost in self.goalposts:
             if len(goalpost.soldiers) == 0:
                 if goalpost.emptySinceTurn is None:
                     goalpost.emptySinceTurn = self.currentTurn
-                elif self.currentTurn - goalpost.emptySinceTurn >= 2:
+                elif self.currentTurn - goalpost.emptySinceTurn >= 4:
                     self.isGameOver = True
                     self.winner = self.players[1]  # 플레이어 패배 → 여왕 승리
             else:
@@ -462,10 +458,15 @@ class CroquetMatch:
             pygame.draw.circle(self.screen, self.colors["BLACK"], count_bg.center, 11, 1)
             self.screen.blit(count_text, count_text.get_rect(center=count_bg.center))
 
-            # 빈 골대 카운트다운 경고
-            if count == 0 and goalpost.emptySinceTurn is not None:
-                remaining = 2 - (self.currentTurn - goalpost.emptySinceTurn)
-                warn = self.small_font.render(f"비었음! {max(0, remaining)}턴", True, self.colors["RED"])
+            # 빈 골대는 득점 불가 + 게임오버까지 남은 턴 안내
+            if count == 0:
+                if goalpost.emptySinceTurn is not None:
+                    remaining = 4 - (self.currentTurn - goalpost.emptySinceTurn)
+                    text = f"득점 불가! {max(0, remaining)}턴"
+                else:
+                    text = "득점 불가"
+
+                warn = self.small_font.render(text, True, self.colors["RED"])
                 warn_rect = warn.get_rect(center=(gx, gy + 78))
                 pygame.draw.rect(self.screen, self.colors["WHITE"], warn_rect.inflate(10, 4), border_radius=4)
                 self.screen.blit(warn, warn_rect)

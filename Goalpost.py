@@ -15,9 +15,30 @@ class Goalpost(Object):
         if soldier not in self.soldiers:
             self.soldiers.append(soldier)
 
-    def has_posts(self):
-        # 병사가 2명 이상이면 양쪽 기둥(골문) 형태 → 공 충돌 적용
-        return len(self.soldiers) >= 2
+    def collision_rects(self):
+        # 골대 형태(병사 수)에 따른 공 충돌 히트박스 목록
+        x, y = self.location
+        count = len(self.soldiers)
+
+        if count >= 2:
+            # 양쪽 기둥의 밑동 (작은 히트박스)
+            bottom_y = y + 35
+            bw, bh = 8, 8
+            return [
+                pygame.Rect((x - 20) - bw // 2, bottom_y - bh, bw, bh),
+                pygame.Rect((x + 20) - bw // 2, bottom_y - bh, bw, bh),
+            ]
+        elif count == 1:
+            # 텐트의 양다리(발) — 가운데 간격은 비워 공이 통과 가능하게 함
+            foot_y = y + 30
+            bw, bh = 7, 12
+            return [
+                pygame.Rect((x - 22) - bw // 2, foot_y - bh, bw, bh),
+                pygame.Rect((x + 22) - bw // 2, foot_y - bh, bw, bh),
+            ]
+        else:
+            # 빈 골대: 충돌 없음
+            return []
 
     def draw_goalpost(self, screen):
         count = len(self.soldiers)

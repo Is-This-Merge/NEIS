@@ -61,29 +61,30 @@ class Goalpost(Object):
         pygame.draw.rect(screen, line_color, pygame.Rect(right_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
 
     def _draw_tent(self, screen):
-        # 병사 1명: 엎드려뻗쳐로 텐트(∧) 모양을 만든 형태
+        # 병사 1명: 엎드려뻗쳐로 가운데가 뚫린 아치(∩) 텐트를 만든 형태
+        # 공이 다리 사이(가운데)로 통과할 수 있음
         x, y = self.location
-        white = (255, 255, 255)
         black = (0, 0, 0)
         skin = (255, 220, 185)
 
-        ground_left = (x - 24, y + 30)
-        ground_right = (x + 24, y + 30)
-        peak = (x, y - 18)
+        ground_left = (x - 26, y + 30)
+        ground_right = (x + 26, y + 30)
+        peak_left = (x - 9, y - 16)
+        peak_right = (x + 9, y - 16)
 
-        # 텐트(몸통) 면
-        pygame.draw.polygon(screen, white, [ground_left, peak, ground_right])
-        pygame.draw.polygon(screen, black, [ground_left, peak, ground_right], 2)
+        # 아치 다리 (양옆) — 가운데는 비워서 공이 지나갈 수 있게 함
+        pygame.draw.line(screen, black, ground_left, peak_left, 4)
+        pygame.draw.line(screen, black, ground_right, peak_right, 4)
 
-        # 등에 카드 무늬 한 줄
-        pygame.draw.line(screen, black, (x - 8, y + 4), peak, 1)
+        # 등(아치 윗부분) — 살짝 굽은 모양
+        pygame.draw.line(screen, black, peak_left, peak_right, 4)
 
         # 손(왼쪽 바닥)과 발(오른쪽 바닥) 표시
         pygame.draw.line(screen, black, ground_left, (ground_left[0] - 6, ground_left[1] + 6), 3)
         pygame.draw.line(screen, black, ground_right, (ground_right[0] + 6, ground_right[1] + 6), 3)
 
         # 머리 (왼쪽 바닥 쪽에서 숙인 모습)
-        head = (ground_left[0] + 2, ground_left[1] - 8)
+        head = (ground_left[0] - 2, ground_left[1] - 6)
         pygame.draw.circle(screen, skin, head, 6)
         pygame.draw.circle(screen, black, head, 6, 1)
 

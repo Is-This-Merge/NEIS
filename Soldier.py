@@ -21,8 +21,6 @@ class Soldier(Object):
 
     def execute_queen_command(self):
         # 여왕의 명령: 현재 지키던 골대에서 이탈
-        print(f"카드 병사가 여왕의 명령을 수행합니다! (복귀까지 {self.COOLDOWN_TURNS}턴)")
-
         if self.assignedGoal is not None and self in self.assignedGoal.soldiers:
             self.assignedGoal.soldiers.remove(self)
 

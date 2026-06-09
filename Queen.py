@@ -15,7 +15,8 @@ class Queen(Player):
         if len(assigned) == 0:
             return
 
-        count = random.randint(0, min(2, len(assigned)))
+        # 한 번에 최소 0명 ~ 최대 4명까지 데려감
+        count = random.randint(0, min(4, len(assigned)))
 
         for _ in range(count):
             if not assigned:
@@ -31,11 +32,6 @@ class Queen(Player):
         if self.match.turnStarted or self.match.isGameOver:
             return True
 
-        self.command()
-
-        if self.passedGoals >= len(self.match.goalposts):
-            return True
-
         flamingo = self.get_current_flamingo()
 
         if flamingo is None or not flamingo.usable:
@@ -44,7 +40,13 @@ class Queen(Player):
             return True
 
         # 이미 스윙 애니메이션이 진행 중이면 새로 시작하지 않음
+        # (command/스윙 설정이 한 턴에 한 번만 실행되도록 보장)
         if flamingo.swinging:
+            return True
+
+        self.command()
+
+        if self.passedGoals >= len(self.match.goalposts):
             return True
 
         bx, by = self.ball.location

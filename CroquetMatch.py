@@ -334,60 +334,6 @@ class CroquetMatch:
                 pygame.draw.rect(self.screen, self.colors["BLACK"], win_rect.inflate(30, 18), 2, border_radius=8)
                 self.screen.blit(win_text, win_rect)
 
-        def draw_goalpost(goalpost, active=False):
-
-            x, y = goalpost.location
-            soldier_color = self.colors["WHITE"]
-            line_color = self.colors["BLACK"]
-
-            left_soldier_x = x - 20
-            right_soldier_x = x + 20
-            soldier_top_y = y - 35
-            soldier_bottom_y = y + 35
-
-            # 왼쪽 카드병정
-            pygame.draw.rect(self.screen, soldier_color, pygame.Rect(left_soldier_x - 5, soldier_top_y, 10, 70))
-            pygame.draw.circle(self.screen, self.colors["BLACK"], (left_soldier_x, soldier_top_y - 8), 7)
-
-            # 오른쪽 카드병정
-            pygame.draw.rect(self.screen, soldier_color, pygame.Rect(right_soldier_x - 5, soldier_top_y, 10, 70))
-            pygame.draw.circle(self.screen, self.colors["BLACK"], (right_soldier_x, soldier_top_y - 8), 7)
-
-            # 얇은 윗부분
-            pygame.draw.line(self.screen, line_color, (left_soldier_x, soldier_top_y + 10), (right_soldier_x, soldier_top_y + 10), 2)
-
-            # 밑동 표시
-            pygame.draw.rect(self.screen, line_color, pygame.Rect(left_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
-            pygame.draw.rect(self.screen, line_color, pygame.Rect(right_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
-
-            # 골문 번호
-            number_text = self.small_font.render(str(goalpost.order), True, self.colors["BLACK"])
-            number_rect = number_text.get_rect(center=(x, y + 55))
-            self.screen.blit(number_text, number_rect)
-
-        def draw_goal_markers():
-                time = pygame.time.get_ticks() / 300
-                bob = math.sin(time) * 6
-
-                for player in self.players:
-                    if player.passedGoals >= len(self.goalposts):
-                        continue
-
-                    goalpost = self.goalposts[player.passedGoals]
-                    x, y = goalpost.location
-
-                    marker_y = y - 72 + bob
-                    color = player.ball.color
-
-                    points = [
-                        (x, marker_y + 18),
-                        (x - 12, marker_y),
-                        (x + 12, marker_y)
-                    ]
-
-                    pygame.draw.polygon(self.screen, color, points)
-                    pygame.draw.polygon(self.screen, self.colors["BLACK"], points, 2)
-
         def draw_flamingo_handle():
             bx, by = self.currentBall.location
             mx, my = pygame.mouse.get_pos()
@@ -593,10 +539,9 @@ class CroquetMatch:
 
         # 골문을 나중에 그림
         for goalpost in self.goalposts:
-            draw_goalpost(goalpost)
-
-        # 플레이어/하트여왕 목표 골대 표시
-        draw_goal_markers()
+            goalpost.draw_goalpost(goalpost)
+            if goalpost.order == self.currentPlayer.passedGoals + 1:
+                goalpost.draw_goal_markers()
 
         # 상단 UI 표시
         draw_top_ui()

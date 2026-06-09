@@ -84,7 +84,9 @@ class Flamingo(Object):
         self.swinging = True
         self.charging = False
 
-        return power
+        # 데미지용 strength: 여왕(속도 = power)과 스케일을 맞추기 위해
+        # 실제 스윙 세기(공 속도 스케일 = power * 3)를 넘김
+        return power * 3
 
     def update_swing(self, ball):
         if not self.swinging:

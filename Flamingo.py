@@ -11,7 +11,6 @@ class Flamingo(Object):
         self.match = match
 
         self.hp = 100
-        self.usable = True
         self.maxDistance = random.randint(30, 50)
         self.__stiffness = random.randint(70, 100)
 

@@ -6,7 +6,6 @@ import pygame, random, math
 class Queen(Player):
     def __init__(self, match, location):
         super().__init__(match, match.colors["RED"], location)
-        self.mood = 0
 
     def command(self):
         # 현재 골대를 지키고 있는 병사들 중 일부를 빼냄

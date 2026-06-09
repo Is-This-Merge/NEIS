@@ -1,15 +1,13 @@
 from Flamingo import Flamingo
 from Hedgehog import Hedgehog
 
-import random
-
 
 class Player:
     def __init__(self, match, color, location):
         self.match = match
         self.flamingos = [Flamingo(match) for _ in range(3)]
         self.currentFlamingoIdx = 0
-        self.ball = Hedgehog(self.match, color, location)
+        self.ball = Hedgehog(match, color, location)
         self.passedGoals = 0
 
     def getCurrentFlamingo(self):
@@ -17,32 +15,12 @@ class Player:
             return None
         return self.flamingos[self.currentFlamingoIdx]
 
-    def has_usable_flamingo(self):
-        return any(flamingo.usable for flamingo in self.flamingos)
-
     def replaceFlamingo(self):
-        for i in range(self.currentFlamingo + 1, len(self.flamingos)):
+        # 현재 다음 → 처음부터 순서대로 사용 가능한 홍학을 찾아 교체
+        n = len(self.flamingos)
+        for offset in range(1, n):
+            i = (self.currentFlamingoIdx + offset) % n
             if self.flamingos[i].usable:
-                self.currentFlamingo = i
+                self.currentFlamingoIdx = i
                 return True
-
-        for i in range(0, self.currentFlamingo):
-            if self.flamingos[i].usable:
-                self.currentFlamingo = i
-                return True
-
         return False
-
-    def hit(self, strength):
-        flamingo = self.get_current_flamingo()
-
-        if flamingo is None or not flamingo.usable:
-            return
-
-        flamingo.hit(self.ball, strength)
-
-        if strength >= 85 and random.random() < 0.01:
-            self.ball.runaway()
-
-        if not flamingo.usable:
-            self.replaceFlamingo()

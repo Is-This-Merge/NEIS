@@ -13,10 +13,6 @@ class Hedgehog(Object):
         self.speed=0
         self.sharpness = random.randint(30, 70)
 
-    # 도망가기
-    def runaway(self):
-        self.usable=False
-
     @classmethod
     def draw_hedgehog_ball(cls, player):
         x, y = player.ball.location

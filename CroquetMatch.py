@@ -467,7 +467,7 @@ class CroquetMatch:
 
             avail = len(self.currentPlayer.available_soldiers())
 
-            panel = pygame.Rect(15, self.height - 66, 372, 52)
+            panel = pygame.Rect(15, self.height - 66, 450, 65)
             draw_panel(panel)
 
             line1 = self.small_font.render(f"배치 가능 병사: {avail}명", True, self.colors["BLACK"])

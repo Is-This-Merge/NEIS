@@ -254,21 +254,22 @@ class CroquetMatch:
                 label_text = self.small_font.render(labels[row], True, self.colors["BLACK"])
                 self.screen.blit(label_text, (30, y - 12))
 
-                for i, flamingo in enumerate(player.flamingos):
-                    icon_x = 125 + i * 58
+                # 현재 사용 중인 홍학의 HP 바 하나만 표시
+                flamingo = player.get_current_flamingo()
+                icon_x = 125
+
+                if flamingo is not None:
                     hp = get_flamingo_hp(flamingo)
 
                     draw_flamingo_head_icon(icon_x, y - 2, 0.75)
-                    draw_hp_bar(icon_x + 18, y - 7, hp, 100, 34, 8)
+                    draw_hp_bar(icon_x + 18, y - 7, hp, 100, 120, 10)
 
-                    if i == player.currentFlamingo:
-                        pygame.draw.rect(
-                            self.screen,
-                            self.colors["BLACK"],
-                            pygame.Rect(icon_x - 11, y - 18, 61, 28),
-                            2,
-                            border_radius=4
-                        )
+                    # 남은 홍학 개수 표시 (예: 1/3)
+                    remaining = sum(1 for f in player.flamingos if f.usable)
+                    count_text = self.small_font.render(
+                        f"{remaining}/{len(player.flamingos)}", True, self.colors["BLACK"]
+                    )
+                    self.screen.blit(count_text, (icon_x + 145, y - 12))
 
             # 위쪽 중앙: 현재 턴
             center_panel_width = 220
@@ -343,6 +344,56 @@ class CroquetMatch:
         for player in self.players:
             self.currentPlayer.ball.draw_hedgehog_ball(player)
 
+        def draw_aim_arrow(flamingo):
+            bx, by = self.currentPlayer.ball.location
+
+            if flamingo.charging:
+                # 차징 중: 충전 시작 시점의 각도를 고정 사용
+                aim_angle = flamingo.flamingo_charge_angle + math.pi
+                hold_time = pygame.time.get_ticks() - flamingo.mouse_down_time
+                hold_ratio = min(hold_time / flamingo.max_hold_time, 1)
+            else:
+                # 클릭 전(조준 중): 현재 마우스 위치 기준으로 방향 계산
+                mx, my = pygame.mouse.get_pos()
+                charge_angle = math.atan2(my - by, mx - bx)
+                aim_angle = charge_angle + math.pi
+                hold_ratio = 0
+
+            # 화살표 길이는 충전량에 비례
+            length = 45 + hold_ratio * 90
+
+            dx, dy = math.cos(aim_angle), math.sin(aim_angle)
+            start = (bx + dx * (self.currentPlayer.ball.radius + 6),
+                     by + dy * (self.currentPlayer.ball.radius + 6))
+            end = (start[0] + dx * length, start[1] + dy * length)
+
+            # 충전량에 따라 색을 노랑 → 주황 → 빨강으로 변화
+            color = (
+                255,
+                int(200 * (1 - hold_ratio)),
+                0
+            )
+
+            # 화살표 몸통
+            pygame.draw.line(self.screen, self.colors["BLACK"],
+                             (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 7)
+            pygame.draw.line(self.screen, color,
+                             (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 4)
+
+            # 화살촉
+            head_len = 16
+            head_angle = math.pi / 6
+            left = (end[0] - head_len * math.cos(aim_angle - head_angle),
+                    end[1] - head_len * math.sin(aim_angle - head_angle))
+            right = (end[0] - head_len * math.cos(aim_angle + head_angle),
+                     end[1] - head_len * math.sin(aim_angle + head_angle))
+
+            head_points = [(int(end[0]), int(end[1])),
+                           (int(left[0]), int(left[1])),
+                           (int(right[0]), int(right[1]))]
+            pygame.draw.polygon(self.screen, color, head_points)
+            pygame.draw.polygon(self.screen, self.colors["BLACK"], head_points, 2)
+
         # 홍학 채를 표시
         flamingo = self.currentPlayer.get_current_flamingo()
         if not self.isGameOver and flamingo is not None:
@@ -350,6 +401,10 @@ class CroquetMatch:
                 # 사람 플레이어: 조준(정지) 중 또는 차징/스윙 중 표시
                 if self.currentPlayer.ball.speed == 0 or flamingo.charging or flamingo.swinging:
                     flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
+
+                # 조준 중(정지) 또는 차징 중에 조준 방향 화살표를 표시
+                if flamingo.charging or (self.currentPlayer.ball.speed == 0 and not flamingo.swinging):
+                    draw_aim_arrow(flamingo)
             else:
                 # 여왕(AI): 스윙 애니메이션이 진행되는 동안만 표시
                 if flamingo.swinging:

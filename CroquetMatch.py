@@ -5,7 +5,6 @@ from Queen import Queen
 
 import pygame, random, math
 
-
 class CroquetMatch:
     def __init__(self):
         self.currentTurn = 0
@@ -16,8 +15,8 @@ class CroquetMatch:
         # 화면 크기: 상단 UI 영역 + 경기장 영역
         self.field_width, self.field_height = 3500 // 4, 2500 // 4
         self.ui_height = 125
-        self.width, self.height = self.field_width, self.field_height + self.ui_height
-        self.field_offset_x, self.field_offset_y = 0, self.ui_height
+        self.width = self.field_width
+        self.height = self.field_height + self.ui_height
         self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.width)] for _ in range(self.height)]
 
         pygame.init()
@@ -59,7 +58,7 @@ class CroquetMatch:
             while True:
                 location = (
                     random.randint(100, self.field_width - 100),
-                    random.randint(self.field_offset_y + 100, self.height - 100)
+                    random.randint(self.ui_height + 100, self.height - 100)
                 )
 
                 is_overlap = False
@@ -97,7 +96,7 @@ class CroquetMatch:
 
         self.center = (
             self.field_width // 2,
-            self.field_offset_y + self.field_height // 2
+            self.ui_height + self.field_height // 2
         )
 
         self.players = [
@@ -114,21 +113,19 @@ class CroquetMatch:
         self.currentBall = self.currentPlayer.ball
 
     def update(self):
+        # 게임오버 시 리턴
         if self.isGameOver:
             return
 
         # 홍학 스윙 애니메이션 처리
         flamingo = self.currentPlayer.getCurrentFlamingo()
-
         if flamingo and flamingo.swinging:
             hit_happened = flamingo.update_swing(self.currentBall)
-
             if hit_happened:
                 self.turnStarted = True
 
         bx, by = self.currentBall.location
         vx, vy = self.currentBall.velocity
-
         bx += vx
         by += vy
         if(vx and vy and 0 <= int(bx) < self.height and 0 <= int(by) < self.width):
@@ -136,7 +133,6 @@ class CroquetMatch:
             vy += self.ground[int(bx)][int(by)][1] / 100
         vx *= self.friction
         vy *= self.friction
-
         if abs(vx) < 0.05:
             vx = 0
         if abs(vy) < 0.05:
@@ -145,10 +141,10 @@ class CroquetMatch:
         radius = self.currentBall.radius
 
         # 경기장 경계 튕김
-        left_bound = self.field_offset_x
-        right_bound = self.field_offset_x + self.field_width
-        top_bound = self.field_offset_y
-        bottom_bound = self.field_offset_y + self.field_height
+        left_bound = 0
+        right_bound = self.width
+        top_bound = self.ui_height
+        bottom_bound = self.height
 
         if bx - radius < left_bound or bx + radius > right_bound:
             vx *= -0.8
@@ -204,7 +200,7 @@ class CroquetMatch:
             self.turnStarted = False
             self.aiming = False
 
-            flamingo = self.currentPlayer.get_current_flamingo()
+            flamingo = self.currentPlayer.getCurrentFlamingo()
             if flamingo is not None:
                 flamingo.charging = False
                 flamingo.swinging = False
@@ -284,7 +280,7 @@ class CroquetMatch:
                 self.screen.blit(label_text, (30, y - 12))
 
                 # 현재 사용 중인 홍학의 HP 바 하나만 표시
-                flamingo = player.get_current_flamingo()
+                flamingo = player.getCurrentFlamingo()
                 icon_x = 125
 
                 if flamingo is not None:
@@ -349,25 +345,14 @@ class CroquetMatch:
         self.screen.fill(self.colors["UI_BG"])
 
         # 경기장 배경
-        field_rect = pygame.Rect(
-            self.field_offset_x,
-            self.field_offset_y,
-            self.field_width,
-            self.field_height
-        )
+        field_rect = pygame.Rect(0, self.ui_height, self.width, self.height)
 
         pygame.draw.rect(self.screen, self.colors["GREEN"], field_rect)
         pygame.draw.rect(self.screen, self.colors["BLACK"], field_rect, 3)
 
         # 경기장 잔디 선
         for x in range(-120, self.field_width, 40):
-            pygame.draw.line(
-                self.screen,
-                self.colors["DARK_GREEN"],
-                (self.field_offset_x + x, self.field_offset_y),
-                (self.field_offset_x + x + 80, self.field_offset_y + self.field_height),
-                1
-            )
+            pygame.draw.line(self.screen, self.colors["DARK_GREEN"], (x, self.ui_height), (x + 80, self.height), 1)
 
         # 공을 먼저 그림: 골대 뒤로 지나갈 수 있게 하기 위함
         for player in self.players:
@@ -424,7 +409,7 @@ class CroquetMatch:
             pygame.draw.polygon(self.screen, self.colors["BLACK"], head_points, 2)
 
         # 홍학 채를 표시
-        flamingo = self.currentPlayer.get_current_flamingo()
+        flamingo = self.currentPlayer.getCurrentFlamingo()
         if not self.isGameOver and flamingo is not None:
             if self.currentPlayer == self.players[0]:
                 # 사람 플레이어: 조준(정지) 중 또는 차징/스윙 중 표시

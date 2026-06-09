@@ -7,7 +7,7 @@ import random
 class Player:
     def __init__(self, match, color, location):
         self.match = match
-        self.flamingos = [Flamingo(match, self) for _ in range(3)]
+        self.flamingos = [Flamingo(match) for _ in range(3)]
         self.currentFlamingoIdx = 0
         self.ball = Hedgehog(self.match, color, location)
         self.passedGoals = 0

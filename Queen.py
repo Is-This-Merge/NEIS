@@ -32,7 +32,7 @@ class Queen(Player):
         if self.match.turnStarted or self.match.isGameOver:
             return True
 
-        flamingo = self.get_current_flamingo()
+        flamingo = self.getCurrentFlamingo()
 
         if flamingo is None or not flamingo.usable:
             self.match.isGameOver = True

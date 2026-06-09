@@ -37,7 +37,7 @@ class GamePlayer(Player):
         self.last_assign_time = pygame.time.get_ticks()
 
     def play(self):
-        flamingo = self.get_current_flamingo()
+        flamingo = self.getCurrentFlamingo()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

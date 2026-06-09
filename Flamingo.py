@@ -5,36 +5,29 @@ import math, random
 
 
 class Flamingo(Object):
-    def __init__(self, match, master):
+    def __init__(self, match):
         super().__init__()
 
         self.match = match
-        self.master = master
 
-        # 기본 상태
         self.hp = 100
         self.usable = True
-
-        # 최대 공격 거리
         self.maxDistance = random.randint(30, 50)
-
-        # 뻣뻣한 정도
         self.__stiffness = random.randint(70, 100)
 
-        # 홍학 채 조작 관련 상태
+        # 조작 관련
         self.charging = False
         self.swinging = False
         self.mouse_down_time = 0
 
-        # 홍학 스윙 애니메이션 상태
+        # 애니메이션 관련
         self.swing_start_time = 0
         self.swing_duration = 300
         self.swing_hit_done = False
         self.swing_pending_velocity = (0, 0)
-        self.swing_base_angle = 0
         self.flamingo_charge_angle = 0
 
-        # 차징 관련 수치
+        # 차징 관련
         self.max_hold_time = 2000
         self.min_power = 2.5
         self.max_power = self.maxDistance * 0.12
@@ -49,7 +42,7 @@ class Flamingo(Object):
 
     def start_charge(self, ball):
         if not self.usable:
-            return False
+            return
 
         bx, by = ball.location
         mx, my = pygame.mouse.get_pos()
@@ -59,11 +52,9 @@ class Flamingo(Object):
         self.mouse_down_time = pygame.time.get_ticks()
         self.flamingo_charge_angle = math.atan2(my - by, mx - bx)
 
-        return True
-
     def release_charge(self, ball):
         if not self.charging or not self.usable:
-            return None
+            return
 
         hold_time = pygame.time.get_ticks() - self.mouse_down_time
         hold_ratio = min(hold_time / self.max_hold_time, 1)
@@ -71,21 +62,18 @@ class Flamingo(Object):
         power = self.min_power + (self.max_power - self.min_power) * hold_ratio
         angle = self.flamingo_charge_angle
 
-        # 현재 그림 구조상 홍학은 공의 마우스 방향 쪽에 서 있으므로,
-        # 공은 그 반대 방향으로 날아가게 함
+        #반대쪽으로 발사
         self.swing_pending_velocity = (
             -math.cos(angle) * power * 3,
             -math.sin(angle) * power * 3
         )
 
-        self.swing_base_angle = angle
         self.swing_start_time = pygame.time.get_ticks()
         self.swing_hit_done = False
         self.swinging = True
         self.charging = False
 
-        # 데미지용 strength: 여왕(속도 = power)과 스케일을 맞추기 위해
-        # 실제 스윙 세기(공 속도 스케일 = power * 3)를 넘김
+        #여왕이랑 스케일 맞추려면 3배 곱해야 함
         return power * 3
 
     def update_swing(self, ball):

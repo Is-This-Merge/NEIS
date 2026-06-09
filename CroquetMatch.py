@@ -49,7 +49,7 @@ class CroquetMatch:
         self.aiming = False
         self.start_mouse = None        
 
-        self.soldiers = [Soldier(cooldown=0, match=self) for _ in range(self.soldiersNum)]
+        self.soldiers = []
 
         # 골문끼리 겹치지 않게 경기장 내부에 배치
         min_goalpost_distance = 130
@@ -75,8 +75,20 @@ class CroquetMatch:
                     break
 
             goalpost = Goalpost(location=location, order=i + 1)
-            goalpost.soldiers = [Soldier(cooldown=0, assignedGoal=goalpost, match=self) for _ in range(3)]
             self.goalposts.append(goalpost)
+
+        # 모든 병사를 하나의 풀(self.soldiers)에서 관리
+        # 골대마다 2명씩 기본 배치 → 양쪽 기둥 형태로 시작
+        for goalpost in self.goalposts:
+            for _ in range(2):
+                soldier = Soldier(match=self)
+                soldier.assign(goalpost)
+                self.soldiers.append(soldier)
+
+        # 나머지는 예비 병사: 플레이어가 숫자키로 배치 가능
+        reserve = self.soldiersNum - len(self.soldiers)
+        for _ in range(max(0, reserve)):
+            self.soldiers.append(Soldier(match=self))
 
         self.center = (
             self.field_width // 2,
@@ -139,7 +151,11 @@ class CroquetMatch:
             by = max(top_bound + radius, min(bottom_bound - radius, by))
 
         # 골대 충돌 판정: 카드병정의 밑동 부분에만 적용
+        # 병사가 2명 이상(양쪽 기둥 형태)인 골대에만 충돌 적용
         for goalpost in self.goalposts:
+            if not goalpost.has_posts():
+                continue
+
             gx, gy = goalpost.location
 
             left_x = gx - 20
@@ -198,6 +214,19 @@ class CroquetMatch:
                 flamingo.swinging = False
 
             self.currentTurn += 1
+            self.check_goal_staffing()
+
+    def check_goal_staffing(self):
+        # 병사가 없는 골대가 2턴 이상 지속되면 플레이어 패배
+        for goalpost in self.goalposts:
+            if len(goalpost.soldiers) == 0:
+                if goalpost.emptySinceTurn is None:
+                    goalpost.emptySinceTurn = self.currentTurn
+                elif self.currentTurn - goalpost.emptySinceTurn >= 2:
+                    self.isGameOver = True
+                    self.winner = self.players[1]  # 플레이어 패배 → 여왕 승리
+            else:
+                goalpost.emptySinceTurn = None
 
     def draw(self):
         def draw_panel(rect):
@@ -410,10 +439,68 @@ class CroquetMatch:
                 if flamingo.swinging:
                     flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
 
+        def draw_goal_status(goalpost):
+            gx, gy = goalpost.location
+            count = len(goalpost.soldiers)
+
+            # 도움이 필요한 골대를 강조 (0명=빨강, 1명=주황 링이 깜빡임)
+            ring = None
+            if count == 0:
+                ring = self.colors["RED"]
+            elif count == 1:
+                ring = self.colors["ORANGE"]
+
+            if ring is not None:
+                pulse = (math.sin(pygame.time.get_ticks() / 200) + 1) / 2
+                radius = 42 + int(pulse * 6)
+                pygame.draw.circle(self.screen, ring, (gx, gy), radius, 2)
+
+            # 병사 수 표시 (골대 오른쪽)
+            count_text = self.small_font.render(f"{count}", True, self.colors["BLACK"])
+            count_bg = count_text.get_rect(center=(gx + 36, gy - 30))
+            pygame.draw.circle(self.screen, self.colors["WHITE"], count_bg.center, 11)
+            pygame.draw.circle(self.screen, self.colors["BLACK"], count_bg.center, 11, 1)
+            self.screen.blit(count_text, count_text.get_rect(center=count_bg.center))
+
+            # 빈 골대 카운트다운 경고
+            if count == 0 and goalpost.emptySinceTurn is not None:
+                remaining = 2 - (self.currentTurn - goalpost.emptySinceTurn)
+                warn = self.small_font.render(f"비었음! {max(0, remaining)}턴", True, self.colors["RED"])
+                warn_rect = warn.get_rect(center=(gx, gy + 78))
+                pygame.draw.rect(self.screen, self.colors["WHITE"], warn_rect.inflate(10, 4), border_radius=4)
+                self.screen.blit(warn, warn_rect)
+
+        def draw_assign_panel():
+            # 플레이어 차례에만 병사 배치 안내 표시
+            if self.currentPlayer != self.players[0] or self.isGameOver:
+                return
+
+            avail = len(self.currentPlayer.available_soldiers())
+
+            panel = pygame.Rect(15, self.height - 66, 372, 52)
+            draw_panel(panel)
+
+            line1 = self.small_font.render(f"배치 가능 병사: {avail}명", True, self.colors["BLACK"])
+            line2 = self.small_font.render("숫자키 1~8 : 해당 번호 골대에 병사 배치", True, self.colors["BLACK"])
+            self.screen.blit(line1, (panel.x + 12, panel.y + 4))
+            self.screen.blit(line2, (panel.x + 12, panel.y + 26))
+
+            # 배치 직후 피드백 메시지 (1.5초간 표시)
+            msg = self.currentPlayer.last_assign_msg
+            if msg and pygame.time.get_ticks() - self.currentPlayer.last_assign_time < 1500:
+                feedback = self.small_font.render(msg, True, self.colors["BLUE"])
+                fb_rect = feedback.get_rect(midleft=(panel.right + 12, panel.centery))
+                pygame.draw.rect(self.screen, self.colors["WHITE"], fb_rect.inflate(10, 6), border_radius=4)
+                self.screen.blit(feedback, fb_rect)
+
         # 골문을 나중에 그림
         for goalpost in self.goalposts:
             goalpost.draw_goalpost(self.screen)
             goalpost.draw_goal_markers(self.screen, self.players)
+            draw_goal_status(goalpost)
+
+        # 병사 배치 안내 패널
+        draw_assign_panel()
 
         # 상단 UI 표시
         draw_top_ui()

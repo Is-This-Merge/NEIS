@@ -6,24 +6,23 @@ import pygame, random, math
 class Queen(Player):
     def __init__(self, match, location):
         super().__init__(match, match.colors["RED"], location)
-        self.movableSoldiers = []
         self.mood = 0
 
-        for soldier in self.match.soldiers:
-            if soldier.assignedGoal is not None:
-                self.movableSoldiers.append(soldier)
-
     def command(self):
-        for soldier in self.match.soldiers:
-            if soldier.assignedGoal is not None and soldier not in self.movableSoldiers:
-                self.movableSoldiers.append(soldier)
+        # 현재 골대를 지키고 있는 병사들 중 일부를 빼냄
+        assigned = [s for s in self.match.soldiers if s.assignedGoal is not None]
 
-        if len(self.movableSoldiers) == 0:
+        if len(assigned) == 0:
             return
 
-        for _ in range(random.randint(0, min(4, len(self.movableSoldiers)))):
-            i = random.randrange(0, len(self.movableSoldiers))
-            self.movableSoldiers[i].execute_queen_command()
+        count = random.randint(0, min(2, len(assigned)))
+
+        for _ in range(count):
+            if not assigned:
+                break
+            soldier = random.choice(assigned)
+            assigned.remove(soldier)
+            soldier.execute_queen_command()
 
     def play(self):
         for event in pygame.event.get():

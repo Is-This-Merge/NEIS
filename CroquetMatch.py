@@ -46,10 +46,6 @@ class CroquetMatch:
         self.soldiers = []
 
         self.friction = 0.975
-        self.aiming = False
-        self.start_mouse = None        
-
-        self.soldiers = []
 
         # 골문끼리 겹치지 않게 경기장 내부에 배치
         min_goalpost_distance = 130
@@ -77,22 +73,11 @@ class CroquetMatch:
             goalpost = Goalpost(location=location, order=i + 1)
             self.goalposts.append(goalpost)
 
-        # 모든 병사를 골대에 배치 (예비 병사 없음)
-        # 우선 골대마다 2명씩 배치하고, 남는 병사는 골대에 골고루 추가 배치
-        for goalpost in self.goalposts:
-            for _ in range(2):
-                if len(self.soldiers) >= self.soldiersNum:
-                    break
-                soldier = Soldier(match=self)
-                soldier.assign(goalpost)
-                self.soldiers.append(soldier)
-
-        i = 0
-        while len(self.soldiers) < self.soldiersNum:
+        # 모든 병사를 골대에 골고루 배치 (16명 → 골대당 2명, 예비 없음)
+        for i in range(self.soldiersNum):
             soldier = Soldier(match=self)
-            soldier.assign(self.goalposts[i % len(self.goalposts)])
+            soldier.assign(self.goalposts[i % self.goalpostsNum])
             self.soldiers.append(soldier)
-            i += 1
 
         self.center = (
             self.field_width // 2,
@@ -198,7 +183,6 @@ class CroquetMatch:
             self.currentBall.velocity = (0, 0)
             self.currentBall.speed = 0
             self.turnStarted = False
-            self.aiming = False
 
             flamingo = self.currentPlayer.getCurrentFlamingo()
             if flamingo is not None:
@@ -257,9 +241,6 @@ class CroquetMatch:
             pygame.draw.circle(self.screen, self.colors["BLACK"], (x + int(2 * scale), y - int(3 * scale)), 1)
 
         def draw_top_ui():
-            def get_flamingo_hp(flamingo):
-                return getattr(flamingo, "hp", getattr(flamingo, "HP", getattr(flamingo, "health", 100)))
-
             def draw_hp_bar(x, y, hp, max_hp=100, width=55, height=8):
                 ratio = max(0, min(hp / max_hp, 1))
                 pygame.draw.rect(self.screen, self.colors["BLACK"], pygame.Rect(x, y, width, height), 1)
@@ -284,10 +265,8 @@ class CroquetMatch:
                 icon_x = 125
 
                 if flamingo is not None:
-                    hp = get_flamingo_hp(flamingo)
-
                     draw_flamingo_head_icon(icon_x, y - 2, 0.75)
-                    draw_hp_bar(icon_x + 18, y - 7, hp, 100, 120, 10)
+                    draw_hp_bar(icon_x + 18, y - 7, flamingo.hp, 100, 120, 10)
 
                     # 남은 홍학 개수 표시 (예: 1/3)
                     remaining = sum(1 for f in player.flamingos if f.usable)

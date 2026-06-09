@@ -539,9 +539,8 @@ class CroquetMatch:
 
         # 골문을 나중에 그림
         for goalpost in self.goalposts:
-            goalpost.draw_goalpost(goalpost)
-            if goalpost.order == self.currentPlayer.passedGoals + 1:
-                goalpost.draw_goal_markers()
+            goalpost.draw_goalpost(self.screen)
+            goalpost.draw_goal_markers(self.screen, self.players)
 
         # 상단 UI 표시
         draw_top_ui()

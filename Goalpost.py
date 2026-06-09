@@ -46,7 +46,7 @@ class Goalpost(Object):
         time = pygame.time.get_ticks() / 300
         bob = math.sin(time) * 6
 
-        for player in players:
+        for player in reversed(players):
             if player.passedGoals != self.order - 1:
                 continue
 

@@ -14,7 +14,7 @@ class CroquetMatch:
         self.winner = None
 
         # 화면 크기: 상단 UI 영역 + 경기장 영역
-        self.field_width, self.field_height = 3500 // 4, 2800 // 4
+        self.field_width, self.field_height = 3500 // 4, 2500 // 4
         self.ui_height = 125
         self.width, self.height = self.field_width, self.field_height + self.ui_height
         self.field_offset_x, self.field_offset_y = 0, self.ui_height

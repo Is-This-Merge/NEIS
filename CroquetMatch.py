@@ -18,6 +18,7 @@ class CroquetMatch:
         self.ui_height = 125
         self.width, self.height = self.field_width, self.field_height + self.ui_height
         self.field_offset_x, self.field_offset_y = 0, self.ui_height
+        self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.width)] for _ in range(self.height)]
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -130,6 +131,9 @@ class CroquetMatch:
 
         bx += vx
         by += vy
+        if(vx and vy and 0 <= int(bx) < self.height and 0 <= int(by) < self.width):
+            vx += self.ground[int(bx)][int(by)][0] / 100
+            vy += self.ground[int(bx)][int(by)][1] / 100
         vx *= self.friction
         vy *= self.friction
 

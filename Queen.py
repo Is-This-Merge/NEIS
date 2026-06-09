@@ -15,8 +15,8 @@ class Queen(Player):
         if len(assigned) == 0:
             return
 
-        # 한 번에 최소 0명 ~ 최대 4명까지 데려감
-        count = random.randint(0, min(4, len(assigned)))
+        # 한 번에 최소 0명 ~ 최대 3명까지 데려감
+        count = random.randint(0, min(3, len(assigned)))
 
         for _ in range(count):
             if not assigned:

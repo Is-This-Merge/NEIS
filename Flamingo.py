@@ -79,6 +79,7 @@ class Flamingo(Object):
         if not self.swinging:
             return False
 
+        # swing은 애니메이션임
         elapsed = pygame.time.get_ticks() - self.swing_start_time
         progress = min(elapsed / self.swing_duration, 1)
 
@@ -98,9 +99,6 @@ class Flamingo(Object):
 
         dx = mx - bx
         dy = my - by
-
-        if math.hypot(dx, dy) == 0:
-            dx, dy = 1, 0
 
         aim_angle = math.atan2(dy, dx)
 
@@ -182,7 +180,6 @@ class Flamingo(Object):
         neck_mid = (int(neck_mid[0]), int(neck_mid[1]))
         head_center = (int(head_center[0]), int(head_center[1]))
 
-        # 부리는 공 쪽을 향하게 함
         beak_angle = math.atan2(by - head_center[1], bx - head_center[0])
         bdx, bdy = math.cos(beak_angle), math.sin(beak_angle)
         bpx, bpy = -math.sin(beak_angle), math.cos(beak_angle)
@@ -247,7 +244,7 @@ class Flamingo(Object):
         # 눈
         pygame.draw.circle(screen, black, eye, 2)
 
-        # 차징 게이지: 홍학 몸통 근처
+        # 차징 게이지
         if self.charging:
             hold_time = pygame.time.get_ticks() - self.mouse_down_time
             hold_ratio = min(hold_time / self.max_hold_time, 1)

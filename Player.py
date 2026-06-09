@@ -16,7 +16,7 @@ class Player:
         return self.flamingos[self.currentFlamingoIdx]
 
     def replaceFlamingo(self):
-        # 현재 다음 → 처음부터 순서대로 사용 가능한 홍학을 찾아 교체
+        # 순서대로 사용 가능한 홍학을 찾아 교체
         n = len(self.flamingos)
         for offset in range(1, n):
             i = (self.currentFlamingoIdx + offset) % n

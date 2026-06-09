@@ -8,7 +8,7 @@ import pygame, random, math
 class CroquetMatch:
     def __init__(self):
         self.currentTurn = 0
-        self.turnStarted = False
+        self.rolling = False
         self.isGameOver = False
         self.winner = None
 
@@ -17,16 +17,105 @@ class CroquetMatch:
         self.ui_height = 125
         self.width = self.field_width
         self.height = self.field_height + self.ui_height
-        self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.width)] for _ in range(self.height)]
 
         pygame.init()
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("이상한 나라의 크로케 경기")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("malgungothic", 28)
-        self.small_font = pygame.font.SysFont("malgungothic", 22)
+        self.font = pygame.font.SysFont("malgungothic", 22)
 
-        self.colors = {
+        self.goalpostsNum = 8
+        self.soldiersNum = 16
+        self.goalposts = []
+        self.soldiers = []
+
+        self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.width)] for _ in range(self.height)]
+
+        center = (self.field_width//2, self.ui_height+self.field_height//2)
+        self.players = [
+            GamePlayer(self, (center[0] - 40, center[1])),
+            Queen(self, (center[0] + 40, center[1]))
+        ]
+
+        self.currentPlayer = self.players[0]
+        self.currentBall = self.currentPlayer.ball
+
+        # 골문 배치
+        for i in range(self.goalpostsNum):
+            while True:
+                location = (random.randint(100, self.field_width - 100), random.randint(self.ui_height + 100, self.height - 100))
+                is_overlap = False
+                for other_goalpost in self.goalposts:
+                    ox, oy = other_goalpost.location
+                    distance = math.hypot(location[0]-ox, location[1]-oy)
+                    if distance < 130:
+                        is_overlap = True
+                        break
+                if not is_overlap:
+                    break
+            self.goalposts.append(Goalpost(location, i+1))
+
+        # 병사 골대에 배치
+        for i in range(self.soldiersNum):
+            soldier = Soldier(self, self.goalposts[i % self.goalpostsNum])
+            self.soldiers.append(soldier)
+
+
+    def update(self):
+        # 게임오버 시 리턴
+        if self.isGameOver:
+            return
+
+        # 홍학 스윙 애니메이션 처리
+        flamingo = self.currentPlayer.getCurrentFlamingo()
+        if flamingo and flamingo.swinging:
+            hit_happened = flamingo.update_swing(self.currentBall)
+            if hit_happened:
+                self.rolling = True
+
+        # 공 굴러가기
+        self.currentBall.roll()
+
+        goalpost = self.goalposts[self.currentPlayer.passedGoals]
+        gx, gy = goalpost.location
+        distance = math.hypot(self.currentBall.location[0] - gx, self.currentBall.location[1] - gy)
+
+        # 골 넣음 판정
+        if distance < 32 and len(goalpost.soldiers) >= 1:
+            self.currentPlayer.passedGoals += 1
+            if self.currentPlayer.passedGoals >= len(self.goalposts):
+                self.isGameOver = True
+                self.winner = self.currentPlayer
+
+        # 공이 멈추면 턴 넘기기
+        if self.rolling and self.currentBall.speed < 0.1:
+            self.currentBall.velocity = (0, 0)
+            self.currentBall.speed = 0
+            self.rolling = False
+
+            flamingo = self.currentPlayer.getCurrentFlamingo()
+            flamingo.charging = False
+            flamingo.swinging = False
+
+            self.currentTurn += 1
+
+            # 쿨다운이 끝난 병사를 다시 사용 가능 상태로 복귀
+            for soldier in self.soldiers:
+                soldier.update_cooldown(self.currentTurn)
+
+            # 병사가 없는 골대가 4턴 이상 지속되면 플레이어 패배
+            for goalpost in self.goalposts:
+                if len(goalpost.soldiers) == 0:
+                    if goalpost.emptySinceTurn is None:
+                        goalpost.emptySinceTurn = self.currentTurn
+                    elif self.currentTurn - goalpost.emptySinceTurn >= 4:
+                        self.isGameOver = True
+                        self.winner = self.players[1]  # 플레이어 패배 → 여왕 승리
+                else:
+                    goalpost.emptySinceTurn = None
+
+    def draw(self):
+        colors = {
             "GREEN": (34, 177, 76),
             "DARK_GREEN": (0, 100, 0),
             "PINK": (255, 105, 180),
@@ -40,240 +129,63 @@ class CroquetMatch:
             "UI_BG": (230, 230, 220)
         }
 
-        self.goalpostsNum = 8
-        self.soldiersNum = 16
-        self.goalposts = []
-        self.soldiers = []
-
-        self.friction = 0.975
-
-        # 골문끼리 겹치지 않게 경기장 내부에 배치
-        min_goalpost_distance = 130
-
-        for i in range(self.goalpostsNum):
-            while True:
-                location = (
-                    random.randint(100, self.field_width - 100),
-                    random.randint(self.ui_height + 100, self.height - 100)
-                )
-
-                is_overlap = False
-
-                for other_goalpost in self.goalposts:
-                    ox, oy = other_goalpost.location
-                    distance = math.hypot(location[0] - ox, location[1] - oy)
-
-                    if distance < min_goalpost_distance:
-                        is_overlap = True
-                        break
-
-                if not is_overlap:
-                    break
-
-            goalpost = Goalpost(location=location, order=i + 1)
-            self.goalposts.append(goalpost)
-
-        # 모든 병사를 골대에 골고루 배치 (16명 → 골대당 2명, 예비 없음)
-        for i in range(self.soldiersNum):
-            soldier = Soldier(match=self)
-            soldier.assign(self.goalposts[i % self.goalpostsNum])
-            self.soldiers.append(soldier)
-
-        self.center = (
-            self.field_width // 2,
-            self.ui_height + self.field_height // 2
-        )
-
-        self.players = [
-            GamePlayer(self, (self.center[0] - 40, self.center[1])),
-            Queen(self, (self.center[0] + 40, self.center[1]))
-        ]
-
-        # 공 크기 조금 줄이기
-        for player in self.players:
-            player.ball.radius = max(8, int(player.ball.radius * 0.75))
-            player.ball.speed = 0
-
-        self.currentPlayer = self.players[0]
-        self.currentBall = self.currentPlayer.ball
-
-    def update(self):
-        # 게임오버 시 리턴
-        if self.isGameOver:
-            return
-
-        # 홍학 스윙 애니메이션 처리
-        flamingo = self.currentPlayer.getCurrentFlamingo()
-        if flamingo and flamingo.swinging:
-            hit_happened = flamingo.update_swing(self.currentBall)
-            if hit_happened:
-                self.turnStarted = True
-
-        bx, by = self.currentBall.location
-        vx, vy = self.currentBall.velocity
-        bx += vx
-        by += vy
-        if(vx and vy and 0 <= int(bx) < self.height and 0 <= int(by) < self.width):
-            vx += self.ground[int(bx)][int(by)][0] / 100
-            vy += self.ground[int(bx)][int(by)][1] / 100
-        vx *= self.friction
-        vy *= self.friction
-        if abs(vx) < 0.05:
-            vx = 0
-        if abs(vy) < 0.05:
-            vy = 0
-
-        radius = self.currentBall.radius
-
-        # 경기장 경계 튕김
-        left_bound = 0
-        right_bound = self.width
-        top_bound = self.ui_height
-        bottom_bound = self.height
-
-        if bx - radius < left_bound or bx + radius > right_bound:
-            vx *= -0.8
-            bx = max(left_bound + radius, min(right_bound - radius, bx))
-
-        if by - radius < top_bound or by + radius > bottom_bound:
-            vy *= -0.8
-            by = max(top_bound + radius, min(bottom_bound - radius, by))
-
-        # 골대 충돌 판정: 골대 형태(병사 수)에 따른 히트박스에 적용
-        # 2명 이상=양쪽 기둥, 1명=텐트 양다리(가운데는 통과 가능), 0명=충돌 없음
-        for goalpost in self.goalposts:
-            ball_rect = pygame.Rect(bx - radius, by - radius, radius * 2, radius * 2)
-
-            for base in goalpost.collision_rects():
-                if ball_rect.colliderect(base):
-                    if bx < base.centerx:
-                        vx = -abs(vx) * 0.75
-                        bx = base.left - radius
-                    else:
-                        vx = abs(vx) * 0.75
-                        bx = base.right + radius
-                    vy *= 0.85
-                    break
-
-        self.currentBall.location = (bx, by)
-        self.currentBall.velocity = (vx, vy)
-
-        # 현재 플레이어의 목표 골문 통과 체크
-        if self.currentPlayer.passedGoals >= len(self.goalposts):
-            self.isGameOver = True
-            self.winner = self.currentPlayer
-            return
-
-        goalpost = self.goalposts[self.currentPlayer.passedGoals]
-        gx, gy = goalpost.location
-        distance = math.hypot(bx - gx, by - gy)
-
-        # 병사가 한 명도 없는 빈 골대에는 골을 넣을 수 없음
-        if distance < 32 and len(goalpost.soldiers) >= 1:
-            self.currentPlayer.passedGoals += 1
-
-            if self.currentPlayer.passedGoals >= len(self.goalposts):
-                self.isGameOver = True
-                self.winner = self.currentPlayer
-
-        # 공이 멈추면 턴 넘기기
-        self.currentBall.speed = math.hypot(*self.currentBall.velocity)
-
-        if self.turnStarted and self.currentBall.speed < 0.1:
-            self.currentBall.velocity = (0, 0)
-            self.currentBall.speed = 0
-            self.turnStarted = False
-
-            flamingo = self.currentPlayer.getCurrentFlamingo()
-            if flamingo is not None:
-                flamingo.charging = False
-                flamingo.swinging = False
-
-            self.currentTurn += 1
-            self.refresh_soldiers()
-
-    def refresh_soldiers(self):
-        # 쿨다운이 끝난 병사를 다시 사용 가능 상태로 복귀
-        for soldier in self.soldiers:
-            soldier.update_cooldown(self.currentTurn)
-
-        # 병사가 없는 골대가 4턴 이상 지속되면 플레이어 패배
-        for goalpost in self.goalposts:
-            if len(goalpost.soldiers) == 0:
-                if goalpost.emptySinceTurn is None:
-                    goalpost.emptySinceTurn = self.currentTurn
-                elif self.currentTurn - goalpost.emptySinceTurn >= 4:
-                    self.isGameOver = True
-                    self.winner = self.players[1]  # 플레이어 패배 → 여왕 승리
-            else:
-                goalpost.emptySinceTurn = None
-
-    def draw(self):
         def draw_panel(rect):
-            pygame.draw.rect(self.screen, self.colors["WHITE"], rect, border_radius=8)
-            pygame.draw.rect(self.screen, self.colors["BLACK"], rect, 2, border_radius=8)
-
-        def draw_flamingo_head_icon(x, y, scale=1):
-            r = int(7 * scale)
-
-            pygame.draw.line(
-                self.screen,
-                self.colors["PINK"],
-                (x - int(5 * scale), y + int(12 * scale)),
-                (x + int(2 * scale), y),
-                max(2, int(4 * scale))
-            )
-
-            pygame.draw.circle(self.screen, self.colors["PINK"], (x, y), r)
-            pygame.draw.circle(self.screen, self.colors["BLACK"], (x, y), r, 1)
-
-            pygame.draw.polygon(
-                self.screen,
-                self.colors["YELLOW"],
-                [
-                    (x + int(6 * scale), y - int(3 * scale)),
-                    (x + int(18 * scale), y),
-                    (x + int(6 * scale), y + int(3 * scale))
-                ]
-            )
-
-            pygame.draw.line(self.screen, self.colors["BLACK"], (x + int(10 * scale), y), (x + int(18 * scale), y), 1)
-            pygame.draw.circle(self.screen, self.colors["BLACK"], (x + int(2 * scale), y - int(3 * scale)), 1)
+            pygame.draw.rect(self.screen, colors["WHITE"], rect, border_radius=8)
+            pygame.draw.rect(self.screen, colors["BLACK"], rect, 2, border_radius=8)
 
         def draw_top_ui():
             def draw_hp_bar(x, y, hp, max_hp=100, width=55, height=8):
                 ratio = max(0, min(hp / max_hp, 1))
-                pygame.draw.rect(self.screen, self.colors["BLACK"], pygame.Rect(x, y, width, height), 1)
-                pygame.draw.rect(self.screen, self.colors["RED"], pygame.Rect(x + 1, y + 1, int((width - 2) * ratio), height - 2))
+                pygame.draw.rect(self.screen, colors["BLACK"], pygame.Rect(x, y, width, height), 1)
+                pygame.draw.rect(self.screen, colors["RED"], pygame.Rect(x + 1, y + 1, int((width - 2) * ratio), height - 2))
 
-            # 왼쪽 위: 홍학 HP
+            # 왼쪽 위: 홍학 HP 박스
             left_panel = pygame.Rect(15, 15, 315, 96)
             draw_panel(left_panel)
 
-            title = self.small_font.render("홍학 HP", True, self.colors["BLACK"])
+            title = self.font.render("홍학 HP", True, colors["BLACK"])
             self.screen.blit(title, (30, 22))
 
             labels = ["플레이어", "하트여왕"]
 
             for row, player in enumerate(self.players):
+                x = 125
                 y = 58 + row * 28
-                label_text = self.small_font.render(labels[row], True, self.colors["BLACK"])
+                label_text = self.font.render(labels[row], True, colors["BLACK"])
                 self.screen.blit(label_text, (30, y - 12))
 
                 # 현재 사용 중인 홍학의 HP 바 하나만 표시
-                flamingo = player.getCurrentFlamingo()
-                icon_x = 125
+                flamingo = player.getCurrentFlamingo()            
 
-                if flamingo is not None:
-                    draw_flamingo_head_icon(icon_x, y - 2, 0.75)
-                    draw_hp_bar(icon_x + 18, y - 7, flamingo.hp, 100, 120, 10)
+                # 홍학 머리
+                scale = 0.75
+                r = int(7 * scale)
+                pygame.draw.line(self.screen, colors["PINK"], (x - int(5 * scale), y + int(12 * scale)), (x + int(2 * scale), y), max(2, int(4 * scale)))
 
-                    # 남은 홍학 개수 표시 (예: 1/3)
-                    remaining = sum(1 for f in player.flamingos if f.usable)
-                    count_text = self.small_font.render(
-                        f"{remaining}/{len(player.flamingos)}", True, self.colors["BLACK"]
-                    )
-                    self.screen.blit(count_text, (icon_x + 145, y - 12))
+                pygame.draw.circle(self.screen, colors["PINK"], (x, y), r)
+                pygame.draw.circle(self.screen, colors["BLACK"], (x, y), r, 1)
+
+                pygame.draw.polygon(
+                    self.screen,
+                    colors["YELLOW"],
+                    [
+                        (x + int(6 * scale), y - int(3 * scale)),
+                        (x + int(18 * scale), y),
+                        (x + int(6 * scale), y + int(3 * scale))
+                    ]
+                )
+
+                pygame.draw.line(self.screen, colors["BLACK"], (x + int(10 * scale), y), (x + int(18 * scale), y), 1)
+                pygame.draw.circle(self.screen, colors["BLACK"], (x + int(2 * scale), y - int(3 * scale)), 1)
+
+                draw_hp_bar(x + 18, y - 7, flamingo.hp, 100, 120, 10)
+
+                # 남은 홍학 개수 표시
+                remaining = sum(1 for f in player.flamingos if f.usable)
+                count_text = self.font.render(
+                    f"{remaining}/{len(player.flamingos)}", True, colors["BLACK"]
+                )
+                self.screen.blit(count_text, (x + 145, y - 12))
 
             # 위쪽 중앙: 현재 턴
             center_panel_width = 220
@@ -283,8 +195,8 @@ class CroquetMatch:
             turn_number = self.currentTurn + 1
             player_name = "플레이어" if self.currentPlayer == self.players[0] else "하트여왕"
 
-            turn_text = self.small_font.render(f"{turn_number}번째 턴", True, self.colors["BLACK"])
-            player_text = self.small_font.render(f"{player_name} 차례", True, self.colors["BLACK"])
+            turn_text = self.font.render(f"{turn_number}번째 턴", True, colors["BLACK"])
+            player_text = self.font.render(f"{player_name} 차례", True, colors["BLACK"])
 
             self.screen.blit(turn_text, turn_text.get_rect(center=(self.width // 2, 35)))
             self.screen.blit(player_text, player_text.get_rect(center=(self.width // 2, 61)))
@@ -293,7 +205,7 @@ class CroquetMatch:
             right_panel = pygame.Rect(self.width - 290, 15, 275, 96)
             draw_panel(right_panel)
 
-            title = self.small_font.render("현재 목표 골대", True, self.colors["BLACK"])
+            title = self.font.render("현재 목표 골대", True, colors["BLACK"])
             self.screen.blit(title, (self.width - 275, 22))
 
             for row, player in enumerate(self.players):
@@ -304,38 +216,37 @@ class CroquetMatch:
                 else:
                     goal_text = f"{player.passedGoals + 1}번"
 
-                label_text = self.small_font.render(f"{labels[row]} : {goal_text}", True, self.colors["BLACK"])
+                label_text = self.font.render(f"{labels[row]} : {goal_text}", True, colors["BLACK"])
                 self.screen.blit(label_text, (self.width - 275, y - 12))
 
                 # 플레이어 색깔 표시용 작은 원
                 pygame.draw.circle(self.screen, player.ball.color, (self.width - 50, y - 2), 8)
-                pygame.draw.circle(self.screen, self.colors["BLACK"], (self.width - 50, y - 2), 8, 2)
+                pygame.draw.circle(self.screen, colors["BLACK"], (self.width - 50, y - 2), 8, 2)
 
             if self.isGameOver:
                 winner_name = "플레이어" if self.winner == self.players[0] else "하트여왕"
-                win_text = self.font.render(f"{winner_name} 승리!", True, self.colors["BLACK"])
-                win_rect = win_text.get_rect(center=(self.width // 2, 103))
+                win_text = pygame.font.SysFont("malgungothic", 28).render(f"{winner_name} 승리!", True, colors["BLACK"])
+                win_rect = win_text.get_rect(center=(self.width//2, self.ui_height+self.height//2))
 
-                pygame.draw.rect(self.screen, self.colors["WHITE"], win_rect.inflate(30, 18), border_radius=8)
-                pygame.draw.rect(self.screen, self.colors["BLACK"], win_rect.inflate(30, 18), 2, border_radius=8)
+                pygame.draw.rect(self.screen, colors["WHITE"], win_rect.inflate(30, 18), border_radius=8)
+                pygame.draw.rect(self.screen, colors["BLACK"], win_rect.inflate(30, 18), 2, border_radius=8)
                 self.screen.blit(win_text, win_rect)
 
         # 전체 배경: UI 영역
-        self.screen.fill(self.colors["UI_BG"])
+        self.screen.fill(colors["UI_BG"])
 
         # 경기장 배경
         field_rect = pygame.Rect(0, self.ui_height, self.width, self.height)
-
-        pygame.draw.rect(self.screen, self.colors["GREEN"], field_rect)
-        pygame.draw.rect(self.screen, self.colors["BLACK"], field_rect, 3)
+        pygame.draw.rect(self.screen, colors["GREEN"], field_rect)
+        pygame.draw.rect(self.screen, colors["BLACK"], field_rect, 3)
 
         # 경기장 잔디 선
         for x in range(-120, self.field_width, 40):
-            pygame.draw.line(self.screen, self.colors["DARK_GREEN"], (x, self.ui_height), (x + 80, self.height), 1)
+            pygame.draw.line(self.screen, colors["DARK_GREEN"], (x, self.ui_height), (x + 80, self.height), 1)
 
-        # 공을 먼저 그림: 골대 뒤로 지나갈 수 있게 하기 위함
+        # 공
         for player in self.players:
-            self.currentPlayer.ball.draw_hedgehog_ball(player)
+            player.ball.draw_ball(self.currentPlayer==player)
 
         def draw_aim_arrow(flamingo):
             bx, by = self.currentPlayer.ball.location
@@ -368,7 +279,7 @@ class CroquetMatch:
             )
 
             # 화살표 몸통
-            pygame.draw.line(self.screen, self.colors["BLACK"],
+            pygame.draw.line(self.screen, colors["BLACK"],
                              (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 7)
             pygame.draw.line(self.screen, color,
                              (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 4)
@@ -385,7 +296,66 @@ class CroquetMatch:
                            (int(left[0]), int(left[1])),
                            (int(right[0]), int(right[1]))]
             pygame.draw.polygon(self.screen, color, head_points)
-            pygame.draw.polygon(self.screen, self.colors["BLACK"], head_points, 2)
+            pygame.draw.polygon(self.screen, colors["BLACK"], head_points, 2)
+
+        def draw_goal_status(goalpost):
+            gx, gy = goalpost.location
+            count = len(goalpost.soldiers)
+
+            # 도움이 필요한 골대를 강조 (0명=빨강, 1명=주황 링이 깜빡임)
+            ring = None
+            if count == 0:
+                ring = colors["RED"]
+            elif count == 1:
+                ring = colors["ORANGE"]
+
+            if ring is not None:
+                pulse = (math.sin(pygame.time.get_ticks() / 200) + 1) / 2
+                radius = 42 + int(pulse * 6)
+                pygame.draw.circle(self.screen, ring, (gx, gy), radius, 2)
+
+            # 병사 수 표시 (골대 오른쪽)
+            count_text = self.font.render(f"{count}", True, colors["BLACK"])
+            count_bg = count_text.get_rect(center=(gx + 36, gy - 30))
+            pygame.draw.circle(self.screen, colors["WHITE"], count_bg.center, 11)
+            pygame.draw.circle(self.screen, colors["BLACK"], count_bg.center, 11, 1)
+            self.screen.blit(count_text, count_text.get_rect(center=count_bg.center))
+
+            # 빈 골대는 득점 불가 + 게임오버까지 남은 턴 안내
+            if count == 0:
+                if goalpost.emptySinceTurn is not None:
+                    remaining = 4 - (self.currentTurn - goalpost.emptySinceTurn)
+                    text = f"득점 불가! {max(0, remaining)}턴"
+                else:
+                    text = "득점 불가"
+
+                warn = self.font.render(text, True, colors["RED"])
+                warn_rect = warn.get_rect(center=(gx, gy + 78))
+                pygame.draw.rect(self.screen, colors["WHITE"], warn_rect.inflate(10, 4), border_radius=4)
+                self.screen.blit(warn, warn_rect)
+
+        def draw_assign_panel():
+            # 플레이어 차례에만 병사 배치 안내 표시
+            if self.currentPlayer != self.players[0] or self.isGameOver:
+                return
+
+            avail = len(self.currentPlayer.available_soldiers())
+
+            panel = pygame.Rect(15, self.height - 66, 450, 65)
+            draw_panel(panel)
+
+            line1 = self.font.render(f"배치 가능 병사: {avail}명", True, colors["BLACK"])
+            line2 = self.font.render("숫자키 1~8 : 해당 번호 골대에 병사 배치", True, colors["BLACK"])
+            self.screen.blit(line1, (panel.x + 12, panel.y + 4))
+            self.screen.blit(line2, (panel.x + 12, panel.y + 26))
+
+            # 배치 직후 피드백 메시지 (1.5초간 표시)
+            msg = self.currentPlayer.last_assign_msg
+            if msg and pygame.time.get_ticks() - self.currentPlayer.last_assign_time < 1500:
+                feedback = self.font.render(msg, True, colors["BLUE"])
+                fb_rect = feedback.get_rect(midleft=(panel.right + 12, panel.centery))
+                pygame.draw.rect(self.screen, colors["WHITE"], fb_rect.inflate(10, 6), border_radius=4)
+                self.screen.blit(feedback, fb_rect)
 
         # 홍학 채를 표시
         flamingo = self.currentPlayer.getCurrentFlamingo()
@@ -402,65 +372,6 @@ class CroquetMatch:
                 # 여왕(AI): 스윙 애니메이션이 진행되는 동안만 표시
                 if flamingo.swinging:
                     flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
-
-        def draw_goal_status(goalpost):
-            gx, gy = goalpost.location
-            count = len(goalpost.soldiers)
-
-            # 도움이 필요한 골대를 강조 (0명=빨강, 1명=주황 링이 깜빡임)
-            ring = None
-            if count == 0:
-                ring = self.colors["RED"]
-            elif count == 1:
-                ring = self.colors["ORANGE"]
-
-            if ring is not None:
-                pulse = (math.sin(pygame.time.get_ticks() / 200) + 1) / 2
-                radius = 42 + int(pulse * 6)
-                pygame.draw.circle(self.screen, ring, (gx, gy), radius, 2)
-
-            # 병사 수 표시 (골대 오른쪽)
-            count_text = self.small_font.render(f"{count}", True, self.colors["BLACK"])
-            count_bg = count_text.get_rect(center=(gx + 36, gy - 30))
-            pygame.draw.circle(self.screen, self.colors["WHITE"], count_bg.center, 11)
-            pygame.draw.circle(self.screen, self.colors["BLACK"], count_bg.center, 11, 1)
-            self.screen.blit(count_text, count_text.get_rect(center=count_bg.center))
-
-            # 빈 골대는 득점 불가 + 게임오버까지 남은 턴 안내
-            if count == 0:
-                if goalpost.emptySinceTurn is not None:
-                    remaining = 4 - (self.currentTurn - goalpost.emptySinceTurn)
-                    text = f"득점 불가! {max(0, remaining)}턴"
-                else:
-                    text = "득점 불가"
-
-                warn = self.small_font.render(text, True, self.colors["RED"])
-                warn_rect = warn.get_rect(center=(gx, gy + 78))
-                pygame.draw.rect(self.screen, self.colors["WHITE"], warn_rect.inflate(10, 4), border_radius=4)
-                self.screen.blit(warn, warn_rect)
-
-        def draw_assign_panel():
-            # 플레이어 차례에만 병사 배치 안내 표시
-            if self.currentPlayer != self.players[0] or self.isGameOver:
-                return
-
-            avail = len(self.currentPlayer.available_soldiers())
-
-            panel = pygame.Rect(15, self.height - 66, 450, 65)
-            draw_panel(panel)
-
-            line1 = self.small_font.render(f"배치 가능 병사: {avail}명", True, self.colors["BLACK"])
-            line2 = self.small_font.render("숫자키 1~8 : 해당 번호 골대에 병사 배치", True, self.colors["BLACK"])
-            self.screen.blit(line1, (panel.x + 12, panel.y + 4))
-            self.screen.blit(line2, (panel.x + 12, panel.y + 26))
-
-            # 배치 직후 피드백 메시지 (1.5초간 표시)
-            msg = self.currentPlayer.last_assign_msg
-            if msg and pygame.time.get_ticks() - self.currentPlayer.last_assign_time < 1500:
-                feedback = self.small_font.render(msg, True, self.colors["BLUE"])
-                fb_rect = feedback.get_rect(midleft=(panel.right + 12, panel.centery))
-                pygame.draw.rect(self.screen, self.colors["WHITE"], fb_rect.inflate(10, 6), border_radius=4)
-                self.screen.blit(feedback, fb_rect)
 
         # 골문을 나중에 그림
         for goalpost in self.goalposts:

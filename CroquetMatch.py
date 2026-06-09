@@ -6,9 +6,9 @@ from Queen import Queen
 import pygame, random, math
 
 class CroquetMatch:
+    font = None
     def __init__(self):
         self.currentTurn = 0
-        self.rolling = False
         self.isGameOver = False
         self.winner = None
 
@@ -18,16 +18,17 @@ class CroquetMatch:
         self.width = self.field_width
         self.height = self.field_height + self.ui_height
 
+        self.last_assign_msg = ""
+        self.last_assign_time = 0
+
         pygame.init()
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("이상한 나라의 크로케 경기")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("malgungothic", 22)
 
-        self.goalpostsNum = 8
-        self.soldiersNum = 16
         self.goalposts = []
         self.soldiers = []
+        self.available_soldiers = [s for s in self.soldiers if s.is_available(self.currentTurn)]
 
         self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.width)] for _ in range(self.height)]
 
@@ -41,7 +42,7 @@ class CroquetMatch:
         self.currentBall = self.currentPlayer.ball
 
         # 골문 배치
-        for i in range(self.goalpostsNum):
+        for i in range(8):
             while True:
                 location = (random.randint(100, self.field_width - 100), random.randint(self.ui_height + 100, self.height - 100))
                 is_overlap = False
@@ -56,10 +57,13 @@ class CroquetMatch:
             self.goalposts.append(Goalpost(location, i+1))
 
         # 병사 골대에 배치
-        for i in range(self.soldiersNum):
-            soldier = Soldier(self, self.goalposts[i % self.goalpostsNum])
+        for i in range(16):
+            soldier = Soldier(self, self.goalposts[i % 8])
             self.soldiers.append(soldier)
 
+    def set_msg(self, msg):
+        self.last_assign_msg= msg
+        self.last_assign_time = pygame.time.get_ticks()
 
     def update(self):
         # 게임오버 시 리턴
@@ -71,7 +75,7 @@ class CroquetMatch:
         if flamingo and flamingo.swinging:
             hit_happened = flamingo.update_swing(self.currentBall)
             if hit_happened:
-                self.rolling = True
+                self.currentBall.rolling = True
 
         # 공 굴러가기
         self.currentBall.roll()
@@ -88,10 +92,10 @@ class CroquetMatch:
                 self.winner = self.currentPlayer
 
         # 공이 멈추면 턴 넘기기
-        if self.rolling and self.currentBall.speed < 0.1:
+        if self.currentBall.rolling and self.currentBall.speed < 0.1:
             self.currentBall.velocity = (0, 0)
             self.currentBall.speed = 0
-            self.rolling = False
+            self.currentBall.rolling = False
 
             flamingo = self.currentPlayer.getCurrentFlamingo()
             flamingo.charging = False
@@ -102,6 +106,8 @@ class CroquetMatch:
             # 쿨다운이 끝난 병사를 다시 사용 가능 상태로 복귀
             for soldier in self.soldiers:
                 soldier.update_cooldown(self.currentTurn)
+
+            self.available_soldiers = [s for s in self.soldiers if s.is_available(self.currentTurn)]
 
             # 병사가 없는 골대가 4턴 이상 지속되면 플레이어 패배
             for goalpost in self.goalposts:
@@ -139,11 +145,10 @@ class CroquetMatch:
                 pygame.draw.rect(self.screen, colors["BLACK"], pygame.Rect(x, y, width, height), 1)
                 pygame.draw.rect(self.screen, colors["RED"], pygame.Rect(x + 1, y + 1, int((width - 2) * ratio), height - 2))
 
-            # 왼쪽 위: 홍학 HP 박스
-            left_panel = pygame.Rect(15, 15, 315, 96)
-            draw_panel(left_panel)
+            # 홍학 HP 박스
+            draw_panel(pygame.Rect(15, 15, 315, 96))
 
-            title = self.font.render("홍학 HP", True, colors["BLACK"])
+            title = pygame.font.SysFont("malgungothic", 22).render("홍학 HP", True, colors["BLACK"])
             self.screen.blit(title, (30, 22))
 
             labels = ["플레이어", "하트여왕"]
@@ -151,7 +156,7 @@ class CroquetMatch:
             for row, player in enumerate(self.players):
                 x = 125
                 y = 58 + row * 28
-                label_text = self.font.render(labels[row], True, colors["BLACK"])
+                label_text = pygame.font.SysFont("malgungothic", 22).render(labels[row], True, colors["BLACK"])
                 self.screen.blit(label_text, (30, y - 12))
 
                 # 현재 사용 중인 홍학의 HP 바 하나만 표시
@@ -182,47 +187,37 @@ class CroquetMatch:
 
                 # 남은 홍학 개수 표시
                 remaining = sum(1 for f in player.flamingos if f.usable)
-                count_text = self.font.render(
+                count_text = pygame.font.SysFont("malgungothic", 22).render(
                     f"{remaining}/{len(player.flamingos)}", True, colors["BLACK"]
                 )
                 self.screen.blit(count_text, (x + 145, y - 12))
 
-            # 위쪽 중앙: 현재 턴
-            center_panel_width = 220
-            center_panel = pygame.Rect(self.width // 2 - center_panel_width // 2, 15, center_panel_width, 64)
-            draw_panel(center_panel)
-
+            # 현재 턴 표시
+            draw_panel(pygame.Rect(self.width//2-220/ 2, 15, 220, 64))
             turn_number = self.currentTurn + 1
             player_name = "플레이어" if self.currentPlayer == self.players[0] else "하트여왕"
-
-            turn_text = self.font.render(f"{turn_number}번째 턴", True, colors["BLACK"])
-            player_text = self.font.render(f"{player_name} 차례", True, colors["BLACK"])
-
+            turn_text = pygame.font.SysFont("malgungothic", 22).render(f"{turn_number}번째 턴", True, colors["BLACK"])
+            player_text = pygame.font.SysFont("malgungothic", 22).render(f"{player_name} 차례", True, colors["BLACK"])
             self.screen.blit(turn_text, turn_text.get_rect(center=(self.width // 2, 35)))
             self.screen.blit(player_text, player_text.get_rect(center=(self.width // 2, 61)))
 
-            # 오른쪽 위: 각자의 목표 골대
-            right_panel = pygame.Rect(self.width - 290, 15, 275, 96)
-            draw_panel(right_panel)
-
-            title = self.font.render("현재 목표 골대", True, colors["BLACK"])
+            # 각자의 목표 골대
+            draw_panel(pygame.Rect(self.width - 290, 15, 275, 96))
+            title = pygame.font.SysFont("malgungothic", 22).render("현재 목표 골대", True, colors["BLACK"])
             self.screen.blit(title, (self.width - 275, 22))
-
             for row, player in enumerate(self.players):
                 y = 58 + row * 28
-
                 if player.passedGoals >= len(self.goalposts):
                     goal_text = "완료"
                 else:
                     goal_text = f"{player.passedGoals + 1}번"
-
-                label_text = self.font.render(f"{labels[row]} : {goal_text}", True, colors["BLACK"])
+                label_text = pygame.font.SysFont("malgungothic", 22).render(f"{labels[row]} : {goal_text}", True, colors["BLACK"])
                 self.screen.blit(label_text, (self.width - 275, y - 12))
-
                 # 플레이어 색깔 표시용 작은 원
                 pygame.draw.circle(self.screen, player.ball.color, (self.width - 50, y - 2), 8)
                 pygame.draw.circle(self.screen, colors["BLACK"], (self.width - 50, y - 2), 8, 2)
 
+            # 게임 오버 메시지
             if self.isGameOver:
                 winner_name = "플레이어" if self.winner == self.players[0] else "하트여왕"
                 win_text = pygame.font.SysFont("malgungothic", 28).render(f"{winner_name} 승리!", True, colors["BLACK"])
@@ -272,17 +267,11 @@ class CroquetMatch:
             end = (start[0] + dx * length, start[1] + dy * length)
 
             # 충전량에 따라 색을 노랑 → 주황 → 빨강으로 변화
-            color = (
-                255,
-                int(200 * (1 - hold_ratio)),
-                0
-            )
+            color = (255, int(200 * (1 - hold_ratio)), 0)
 
             # 화살표 몸통
-            pygame.draw.line(self.screen, colors["BLACK"],
-                             (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 7)
-            pygame.draw.line(self.screen, color,
-                             (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 4)
+            pygame.draw.line(self.screen, colors["BLACK"], (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 7)
+            pygame.draw.line(self.screen, color, (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), 4)
 
             # 화살촉
             head_len = 16
@@ -315,7 +304,7 @@ class CroquetMatch:
                 pygame.draw.circle(self.screen, ring, (gx, gy), radius, 2)
 
             # 병사 수 표시 (골대 오른쪽)
-            count_text = self.font.render(f"{count}", True, colors["BLACK"])
+            count_text = pygame.font.SysFont("malgungothic", 22).render(f"{count}", True, colors["BLACK"])
             count_bg = count_text.get_rect(center=(gx + 36, gy - 30))
             pygame.draw.circle(self.screen, colors["WHITE"], count_bg.center, 11)
             pygame.draw.circle(self.screen, colors["BLACK"], count_bg.center, 11, 1)
@@ -329,7 +318,7 @@ class CroquetMatch:
                 else:
                     text = "득점 불가"
 
-                warn = self.font.render(text, True, colors["RED"])
+                warn = pygame.font.SysFont("malgungothic", 22).render(text, True, colors["RED"])
                 warn_rect = warn.get_rect(center=(gx, gy + 78))
                 pygame.draw.rect(self.screen, colors["WHITE"], warn_rect.inflate(10, 4), border_radius=4)
                 self.screen.blit(warn, warn_rect)
@@ -339,20 +328,17 @@ class CroquetMatch:
             if self.currentPlayer != self.players[0] or self.isGameOver:
                 return
 
-            avail = len(self.currentPlayer.available_soldiers())
-
             panel = pygame.Rect(15, self.height - 66, 450, 65)
             draw_panel(panel)
-
-            line1 = self.font.render(f"배치 가능 병사: {avail}명", True, colors["BLACK"])
-            line2 = self.font.render("숫자키 1~8 : 해당 번호 골대에 병사 배치", True, colors["BLACK"])
+            line1 = pygame.font.SysFont("malgungothic", 22).render(f"배치 가능 병사: {len(self.available_soldiers)}명", True, colors["BLACK"])
+            line2 = pygame.font.SysFont("malgungothic", 22).render("숫자키 1~8 : 해당 번호 골대에 병사 배치", True, colors["BLACK"])
             self.screen.blit(line1, (panel.x + 12, panel.y + 4))
             self.screen.blit(line2, (panel.x + 12, panel.y + 26))
 
             # 배치 직후 피드백 메시지 (1.5초간 표시)
-            msg = self.currentPlayer.last_assign_msg
-            if msg and pygame.time.get_ticks() - self.currentPlayer.last_assign_time < 1500:
-                feedback = self.font.render(msg, True, colors["BLUE"])
+            msg = self.last_assign_msg
+            if msg and pygame.time.get_ticks() - self.last_assign_time < 1500:
+                feedback = pygame.font.SysFont("malgungothic", 22).render(msg, True, colors["BLUE"])
                 fb_rect = feedback.get_rect(midleft=(panel.right + 12, panel.centery))
                 pygame.draw.rect(self.screen, colors["WHITE"], fb_rect.inflate(10, 6), border_radius=4)
                 self.screen.blit(feedback, fb_rect)

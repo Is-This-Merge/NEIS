@@ -23,7 +23,7 @@ class Queen(Player):
             soldier.execute_queen_command()
 
     def play(self):
-        if self.match.rolling or self.match.isGameOver:
+        if self.ball.rolling or self.match.isGameOver:
             return True
 
         flamingo = self.getCurrentFlamingo()

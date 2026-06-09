@@ -10,9 +10,10 @@ class Hedgehog(Object):
         self.radius=random.randint(8, 15)
         self.color=color
         self.velocity=(0,0)
-        self.speed=0
+        self.speed = 0
         self.sharpness = random.randint(30, 70)
         self.roundness = 0.95
+        self.rolling = False
 
     def roll(self):
         bx, by = self.location

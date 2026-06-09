@@ -180,6 +180,7 @@ class Flamingo(Object):
         neck_mid = (int(neck_mid[0]), int(neck_mid[1]))
         head_center = (int(head_center[0]), int(head_center[1]))
 
+
         beak_angle = math.atan2(by - head_center[1], bx - head_center[0])
         bdx, bdy = math.cos(beak_angle), math.sin(beak_angle)
         bpx, bpy = -math.sin(beak_angle), math.cos(beak_angle)
@@ -244,7 +245,7 @@ class Flamingo(Object):
         # 눈
         pygame.draw.circle(screen, black, eye, 2)
 
-        # 차징 게이지
+        # 차징 게이지: 홍학 몸통 근처
         if self.charging:
             hold_time = pygame.time.get_ticks() - self.mouse_down_time
             hold_ratio = min(hold_time / self.max_hold_time, 1)

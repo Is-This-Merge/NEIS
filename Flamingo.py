@@ -23,7 +23,7 @@ class Flamingo(Object):
         self.swing_start_time = 0
         self.swing_hit_done = False
         self.swing_pending_velocity = (0, 0)
-        self.flamingo_charge_angle = 0
+        self.charge_angle = 0
 
         # 차징 관련
         self.max_hold_time = 2000
@@ -46,7 +46,7 @@ class Flamingo(Object):
         self.charging = True
         self.swinging = False
         self.mouse_down_time = pygame.time.get_ticks()
-        self.flamingo_charge_angle = math.atan2(my - by, mx - bx)
+        self.charge_angle = math.atan2(my - by, mx - bx)
 
     def release_charge(self):
         if not self.charging or not self.usable:
@@ -56,7 +56,7 @@ class Flamingo(Object):
         hold_ratio = min(hold_time / self.max_hold_time, 1)
 
         power = 7 + (self.maxDistance) * hold_ratio
-        angle = self.flamingo_charge_angle
+        angle = self.charge_angle
 
         #반대쪽으로 발사
         self.swing_pending_velocity = (
@@ -99,7 +99,7 @@ class Flamingo(Object):
         aim_angle = math.atan2(dy, dx)
 
         if self.charging or self.swinging:
-            aim_angle = self.flamingo_charge_angle
+            aim_angle = self.charge_angle
 
         stand_angle = aim_angle + math.pi / 2
 

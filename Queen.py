@@ -55,7 +55,7 @@ class Queen(Player):
         velocity = (dx / length * power, dy / length * power)
 
         angle_to_goal = math.atan2(dy, dx)
-        flamingo.flamingo_charge_angle = angle_to_goal + math.pi
+        flamingo.charge_angle = angle_to_goal + math.pi
         flamingo.swing_pending_velocity = velocity
         flamingo.swing_start_time = pygame.time.get_ticks()
         flamingo.swing_hit_done = False

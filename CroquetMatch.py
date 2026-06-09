@@ -248,7 +248,7 @@ class CroquetMatch:
 
             if flamingo.charging:
                 # 차징 중: 충전 시작 시점의 각도를 고정 사용
-                aim_angle = flamingo.flamingo_charge_angle + math.pi
+                aim_angle = flamingo.charge_angle + math.pi
                 hold_time = pygame.time.get_ticks() - flamingo.mouse_down_time
                 hold_ratio = min(hold_time / flamingo.max_hold_time, 1)
             else:

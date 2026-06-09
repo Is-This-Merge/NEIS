@@ -343,13 +343,17 @@ class CroquetMatch:
         for player in self.players:
             self.currentPlayer.ball.draw_hedgehog_ball(player)
 
-        # 플레이어 차례에는 홍학 채를 표시
+        # 홍학 채를 표시
         flamingo = self.currentPlayer.get_current_flamingo()
-        if (self.currentPlayer == self.players[0]
-                and not self.isGameOver
-                and flamingo is not None
-                and (self.currentPlayer.ball.speed == 0 or flamingo.charging or flamingo.swinging)):
-            flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
+        if not self.isGameOver and flamingo is not None:
+            if self.currentPlayer == self.players[0]:
+                # 사람 플레이어: 조준(정지) 중 또는 차징/스윙 중 표시
+                if self.currentPlayer.ball.speed == 0 or flamingo.charging or flamingo.swinging:
+                    flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
+            else:
+                # 여왕(AI): 스윙 애니메이션이 진행되는 동안만 표시
+                if flamingo.swinging:
+                    flamingo.draw_flamingo_handle(self.screen, self.currentPlayer.ball)
 
         # 골문을 나중에 그림
         for goalpost in self.goalposts:

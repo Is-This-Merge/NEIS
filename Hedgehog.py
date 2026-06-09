@@ -1,5 +1,5 @@
 from Object import Object
-import pygame, math
+import pygame, math, random
 
 class Hedgehog(Object):
     match = None
@@ -11,8 +11,8 @@ class Hedgehog(Object):
         self.color=color
         self.velocity=(0,0)
         self.speed=0
-        self.sharpness = 50
-        self.__roundness = 50
+        self.sharpness = random.randint(30, 70)
+        self.__roundness = random.randint(30, 70)
 
     # 도망가기
     def runaway(self):

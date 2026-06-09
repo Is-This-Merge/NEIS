@@ -1,11 +1,11 @@
 from Object import Object
 
 import pygame
-import math
+import math, random
 
 
 class Flamingo(Object):
-    def __init__(self, match, maxDistance, stiffness, master):
+    def __init__(self, match, master):
         super().__init__()
 
         self.match = match
@@ -16,10 +16,10 @@ class Flamingo(Object):
         self.usable = True
 
         # 최대 공격 거리
-        self.maxDistance = maxDistance
+        self.maxDistance = random.randint(30, 50)
 
         # 뻣뻣한 정도
-        self.__stiffness = stiffness
+        self.__stiffness = random.randint(70, 100)
 
         # 홍학 채 조작 관련 상태
         self.charging = False
@@ -40,14 +40,12 @@ class Flamingo(Object):
         self.max_power = self.maxDistance * 0.12
 
     def hit(self, hedgehog, strength):
-        damage = hedgehog.sharpness * strength / 100 * (1 - self.__stiffness / 100)
+        damage = hedgehog.sharpness * strength / 5 * (1 - self.__stiffness / 100)
         self.hp -= damage
 
         if self.hp <= 0:
             self.hp = 0
             self.usable = False
-            self.charging = False
-            self.swinging = False
 
     def start_charge(self, ball):
         if not self.usable:

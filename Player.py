@@ -8,9 +8,9 @@ class Player:
     def __init__(self, match, color, location):
         self.match = match
         self.flamingos = [
-            Flamingo(self.match, random.randint(30, 50), random.randint(70, 100), self),
-            Flamingo(self.match, random.randint(30, 50), random.randint(70, 100), self),
-            Flamingo(self.match, random.randint(30, 50), random.randint(70, 100), self)
+            Flamingo(match, self),
+            Flamingo(match, self),
+            Flamingo(match, self)
         ]
         self.currentFlamingo = 0
         self.ball = Hedgehog(self.match, random.randint(10, 20), color, location)

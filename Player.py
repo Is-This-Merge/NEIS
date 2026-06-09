@@ -7,19 +7,15 @@ import random
 class Player:
     def __init__(self, match, color, location):
         self.match = match
-        self.flamingos = [
-            Flamingo(match, self),
-            Flamingo(match, self),
-            Flamingo(match, self)
-        ]
-        self.currentFlamingo = 0
-        self.ball = Hedgehog(self.match, random.randint(10, 20), color, location)
+        self.flamingos = [Flamingo(match, self) for _ in range(3)]
+        self.currentFlamingoIdx = 0
+        self.ball = Hedgehog(self.match, color, location)
         self.passedGoals = 0
 
-    def get_current_flamingo(self):
-        if self.currentFlamingo >= len(self.flamingos):
+    def getCurrentFlamingo(self):
+        if self.currentFlamingoIdx >= len(self.flamingos):
             return None
-        return self.flamingos[self.currentFlamingo]
+        return self.flamingos[self.currentFlamingoIdx]
 
     def has_usable_flamingo(self):
         return any(flamingo.usable for flamingo in self.flamingos)

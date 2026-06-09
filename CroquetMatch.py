@@ -118,9 +118,9 @@ class CroquetMatch:
             return
 
         # 홍학 스윙 애니메이션 처리
-        flamingo = self.currentPlayer.get_current_flamingo()
+        flamingo = self.currentPlayer.getCurrentFlamingo()
 
-        if flamingo is not None and flamingo.swinging:
+        if flamingo and flamingo.swinging:
             hit_happened = flamingo.update_swing(self.currentBall)
 
             if hit_happened:

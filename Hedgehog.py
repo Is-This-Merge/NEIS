@@ -3,16 +3,15 @@ import pygame, math, random
 
 class Hedgehog(Object):
     match = None
-    def __init__(self, match, radius, color, location):
+    def __init__(self, match, color, location):
         super().__init__()
         Hedgehog.match = match
         self.location = location
-        self.radius=radius
+        self.radius=random.randint(10, 20)
         self.color=color
         self.velocity=(0,0)
         self.speed=0
         self.sharpness = random.randint(30, 70)
-        self.__roundness = random.randint(30, 70)
 
     # 도망가기
     def runaway(self):

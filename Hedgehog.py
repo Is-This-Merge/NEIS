@@ -1,7 +1,6 @@
-from Object import Object
 import pygame, math, random
 
-class Hedgehog(Object):
+class Hedgehog():
     match = None
     def __init__(self, match, color, location):
         super().__init__()

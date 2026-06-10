@@ -11,7 +11,7 @@ class Hedgehog():
         self.velocity=(0,0)
         self.speed = 0
         self.sharpness = random.randint(30, 70)
-        self.roundness = 0.95
+        self.__roundness = 0.95
         self.rolling = False
 
     def roll(self):
@@ -22,8 +22,8 @@ class Hedgehog():
         if(vx and vy and 0 <= int(bx) < Hedgehog.match.height and 0 <= int(by) < Hedgehog.match.width):
             vx += Hedgehog.match.ground[int(bx)][int(by)][0] / 100
             vy += Hedgehog.match.ground[int(bx)][int(by)][1] / 100
-        vx *= self.roundness
-        vy *= self.roundness
+        vx *= self.__roundness
+        vy *= self.__roundness
         if abs(vx) < 0.05:
             vx = 0
         if abs(vy) < 0.05:
@@ -44,7 +44,7 @@ class Hedgehog():
             by = max(top_bound + self.radius, min(bottom_bound - self.radius, by))
 
         for goalpost in Hedgehog.match.goalposts:
-            for hb in goalpost.hitBox():
+            for hb in goalpost.getHitBox():
                 if pygame.Rect(bx-self.radius, by-self.radius, self.radius*2, self.radius*2).colliderect(hb):
                     if bx < hb.centerx:
                         vx = -abs(vx) * 0.75

@@ -14,7 +14,7 @@ class Goalpost(Object):
         if soldier not in self.soldiers:
             self.soldiers.append(soldier)
 
-    def hitBox(self):
+    def getHitBox(self):
         x, y = self.location
         count = len(self.soldiers)
 
@@ -39,9 +39,45 @@ class Goalpost(Object):
         count = len(self.soldiers)
 
         if count >= 2:
-            self._draw_two_posts(screen)
+            x, y = self.location
+            soldier_color = (255, 255, 255)
+            line_color = (0, 0, 0)
+
+            left_soldier_x = x - 20
+            right_soldier_x = x + 20
+            soldier_top_y = y - 35
+            soldier_bottom_y = y + 35
+
+            pygame.draw.rect(screen, soldier_color, pygame.Rect(left_soldier_x - 5, soldier_top_y, 10, 70))
+            pygame.draw.circle(screen, (0, 0, 0), (left_soldier_x, soldier_top_y - 8), 7)
+
+            pygame.draw.rect(screen, soldier_color, pygame.Rect(right_soldier_x - 5, soldier_top_y, 10, 70))
+            pygame.draw.circle(screen, (0, 0, 0), (right_soldier_x, soldier_top_y - 8), 7)
+
+            pygame.draw.line(screen, line_color, (left_soldier_x, soldier_top_y + 10), (right_soldier_x, soldier_top_y + 10), 2)
+            pygame.draw.rect(screen, line_color, pygame.Rect(left_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
+            pygame.draw.rect(screen, line_color, pygame.Rect(right_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
         elif count == 1:
-            self._draw_tent(screen)
+            x, y = self.location
+            black = (0, 0, 0)
+            skin = (255, 220, 185)
+
+            ground_left = (x - 26, y + 30)
+            ground_right = (x + 26, y + 30)
+            peak_left = (x - 9, y - 16)
+            peak_right = (x + 9, y - 16)
+
+            pygame.draw.line(screen, black, ground_left, peak_left, 4)
+            pygame.draw.line(screen, black, ground_right, peak_right, 4)
+
+            pygame.draw.line(screen, black, peak_left, peak_right, 4)
+
+            pygame.draw.line(screen, black, ground_left, (ground_left[0] - 6, ground_left[1] + 6), 3)
+            pygame.draw.line(screen, black, ground_right, (ground_right[0] + 6, ground_right[1] + 6), 3)
+
+            head = (ground_left[0] - 2, ground_left[1] - 6)
+            pygame.draw.circle(screen, skin, head, 6)
+            pygame.draw.circle(screen, black, head, 6, 1)
         else:
             x, y = self.location
             faded = (120, 120, 120)
@@ -53,48 +89,7 @@ class Goalpost(Object):
         number_text = pygame.font.SysFont("malgungothic", 22).render(str(self.order), True, (0, 0, 0))
         number_rect = number_text.get_rect(center=(x, y + 55))
         screen.blit(number_text, number_rect)
-
-    def _draw_two_posts(self, screen):
-        x, y = self.location
-        soldier_color = (255, 255, 255)
-        line_color = (0, 0, 0)
-
-        left_soldier_x = x - 20
-        right_soldier_x = x + 20
-        soldier_top_y = y - 35
-        soldier_bottom_y = y + 35
-
-        pygame.draw.rect(screen, soldier_color, pygame.Rect(left_soldier_x - 5, soldier_top_y, 10, 70))
-        pygame.draw.circle(screen, (0, 0, 0), (left_soldier_x, soldier_top_y - 8), 7)
-
-        pygame.draw.rect(screen, soldier_color, pygame.Rect(right_soldier_x - 5, soldier_top_y, 10, 70))
-        pygame.draw.circle(screen, (0, 0, 0), (right_soldier_x, soldier_top_y - 8), 7)
-
-        pygame.draw.line(screen, line_color, (left_soldier_x, soldier_top_y + 10), (right_soldier_x, soldier_top_y + 10), 2)
-        pygame.draw.rect(screen, line_color, pygame.Rect(left_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
-        pygame.draw.rect(screen, line_color, pygame.Rect(right_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
-
-    def _draw_tent(self, screen):
-        x, y = self.location
-        black = (0, 0, 0)
-        skin = (255, 220, 185)
-
-        ground_left = (x - 26, y + 30)
-        ground_right = (x + 26, y + 30)
-        peak_left = (x - 9, y - 16)
-        peak_right = (x + 9, y - 16)
-
-        pygame.draw.line(screen, black, ground_left, peak_left, 4)
-        pygame.draw.line(screen, black, ground_right, peak_right, 4)
-
-        pygame.draw.line(screen, black, peak_left, peak_right, 4)
-
-        pygame.draw.line(screen, black, ground_left, (ground_left[0] - 6, ground_left[1] + 6), 3)
-        pygame.draw.line(screen, black, ground_right, (ground_right[0] + 6, ground_right[1] + 6), 3)
-
-        head = (ground_left[0] - 2, ground_left[1] - 6)
-        pygame.draw.circle(screen, skin, head, 6)
-        pygame.draw.circle(screen, black, head, 6, 1)
+        
 
     def draw_goal_markers(self, screen, players):
         time = pygame.time.get_ticks() / 300

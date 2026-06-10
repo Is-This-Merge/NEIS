@@ -69,7 +69,7 @@ class Flamingo(Object):
         self.swinging = True
         self.charging = False
 
-        return power
+        return power * 0.7
 
     def update_swing(self, ball):
         if not self.swinging:

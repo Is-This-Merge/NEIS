@@ -55,7 +55,7 @@ class Flamingo(Object):
         hold_time = pygame.time.get_ticks() - self.mouse_down_time
         hold_ratio = min(hold_time / self.max_hold_time, 1)
 
-        power = 8 + (self.maxPower - 8) * hold_ratio
+        power = 3 + (self.maxPower - 3) * hold_ratio
         angle = self.charge_angle
 
         #반대쪽으로 발사

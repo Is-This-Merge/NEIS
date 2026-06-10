@@ -12,7 +12,7 @@ class Flamingo(Object):
 
         self.hp = 100
         self.maxPower = random.randint(10, 15)
-        self.__stiffness = random.randint(70, 100)
+        self._stiffness = random.randint(70, 100)
 
         # 조작 관련
         self.charging = False
@@ -29,7 +29,7 @@ class Flamingo(Object):
         self.max_hold_time = 2000
 
     def hit(self, hedgehog, strength):
-        damage = hedgehog.sharpness * strength / 5 * (1 - self.__stiffness / 100)
+        damage = hedgehog.sharpness * strength / 5 * (1 - self._stiffness / 100)
         self.hp -= damage
 
         if self.hp <= 0:

@@ -21,6 +21,7 @@ class GamePlayer(Player):
 
         if soldier.assign(goalpost):
             self.match.set_msg(f"{goal_index + 1}번 골대에 병사 배치 완료")
+            self.match.available_soldiers.pop()
 
     def play(self):
         flamingo = self.getCurrentFlamingo()

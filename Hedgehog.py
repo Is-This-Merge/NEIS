@@ -3,7 +3,6 @@ import pygame, math, random
 class Hedgehog():
     match = None
     def __init__(self, match, color, location):
-        super().__init__()
         Hedgehog.match = match
         self.location = location
         self.radius=random.randint(8, 15)
@@ -11,7 +10,7 @@ class Hedgehog():
         self.velocity=(0,0)
         self.speed = 0
         self.sharpness = random.randint(30, 70)
-        self.__roundness = 0.95
+        self._roundness = 0.95
         self.rolling = False
 
     def roll(self):
@@ -22,8 +21,8 @@ class Hedgehog():
         if(vx and vy and 0 <= int(bx) < Hedgehog.match.height and 0 <= int(by) < Hedgehog.match.width):
             vx += Hedgehog.match.ground[int(bx)][int(by)][0] / 100
             vy += Hedgehog.match.ground[int(bx)][int(by)][1] / 100
-        vx *= self.__roundness
-        vy *= self.__roundness
+        vx *= self._roundness
+        vy *= self._roundness
         if abs(vx) < 0.05:
             vx = 0
         if abs(vy) < 0.05:

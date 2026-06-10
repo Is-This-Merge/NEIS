@@ -29,7 +29,7 @@ class CroquetMatch:
         self.soldiers = []
         self.available_soldiers = [s for s in self.soldiers if s.is_available(self.currentTurn)]
 
-        self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.width)] for _ in range(self.height)]
+        self.ground = [[(random.randint(-10, 10), random.randint(-10, 10)) for _ in range(self.height)] for _ in range(self.width)]
 
         center = (self.field_width//2, self.ui_height+self.field_height//2)
         self.players = [
@@ -185,9 +185,8 @@ class CroquetMatch:
                 draw_hp_bar(x + 18, y - 7, flamingo.hp, 100, 120, 10)
 
                 # 남은 홍학 개수 표시
-                remaining = sum(1 for f in player.flamingos if f.usable)
                 count_text = pygame.font.SysFont("malgungothic", 22).render(
-                    f"{remaining}/{len(player.flamingos)}", True, colors["BLACK"]
+                    f"{player.currentFlamingoIdx}/3", True, colors["BLACK"]
                 )
                 self.screen.blit(count_text, (x + 145, y - 12))
 

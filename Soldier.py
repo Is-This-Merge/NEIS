@@ -22,7 +22,7 @@ class Soldier(Object):
     def execute_queen_command(self):
         # 여왕 명령: 지키던 골대에서 이탈 → 쿨다운 동안 사용 불가
         if self.assignedGoal and self in self.assignedGoal.soldiers:
-            self.assignedGoal.soldiers.remove(self)
+            self.assignedGoal.removeSoldier(self)
         self.leftTurn = self.match.currentTurn
         self.assignedGoal = None
         self.usable = False

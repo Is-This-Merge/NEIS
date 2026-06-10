@@ -13,18 +13,20 @@ class Goalpost(Object):
     def addSoldier(self, soldier):
         if soldier not in self.soldiers:
             self.soldiers.append(soldier)
+            self.usable = 1
+
+    def removeSoldier(self, soldier):
+        if soldier in self.soldiers:
+            self.soldiers.remove(soldier)
+        if len(self.soldiers):
+            self.usable = 0
 
     def getHitBox(self):
         x, y = self.location
         count = len(self.soldiers)
 
-        if count >= 2:
-            bottom_y = y + 35
-            bw, bh = 8, 8
-            return [
-                pygame.Rect((x - 20) - bw // 2, bottom_y - bh, bw, bh),
-                pygame.Rect((x + 20) - bw // 2, bottom_y - bh, bw, bh),
-            ]
+        if not self.usable:
+            return []
         elif count == 1:
             foot_y = y + 30
             bw, bh = 7, 12
@@ -33,30 +35,22 @@ class Goalpost(Object):
                 pygame.Rect((x + 22) - bw // 2, foot_y - bh, bw, bh),
             ]
         else:
-            return []
+            bottom_y = y + 35
+            bw, bh = 8, 8
+            return [
+                pygame.Rect((x - 20) - bw // 2, bottom_y - bh, bw, bh),
+                pygame.Rect((x + 20) - bw // 2, bottom_y - bh, bw, bh),
+            ]
 
     def draw_goalpost(self, screen):
         count = len(self.soldiers)
 
-        if count >= 2:
+        if not self.usable:
             x, y = self.location
-            soldier_color = (255, 255, 255)
-            line_color = (0, 0, 0)
-
-            left_soldier_x = x - 20
-            right_soldier_x = x + 20
-            soldier_top_y = y - 35
-            soldier_bottom_y = y + 35
-
-            pygame.draw.rect(screen, soldier_color, pygame.Rect(left_soldier_x - 5, soldier_top_y, 10, 70))
-            pygame.draw.circle(screen, (0, 0, 0), (left_soldier_x, soldier_top_y - 8), 7)
-
-            pygame.draw.rect(screen, soldier_color, pygame.Rect(right_soldier_x - 5, soldier_top_y, 10, 70))
-            pygame.draw.circle(screen, (0, 0, 0), (right_soldier_x, soldier_top_y - 8), 7)
-
-            pygame.draw.line(screen, line_color, (left_soldier_x, soldier_top_y + 10), (right_soldier_x, soldier_top_y + 10), 2)
-            pygame.draw.rect(screen, line_color, pygame.Rect(left_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
-            pygame.draw.rect(screen, line_color, pygame.Rect(right_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
+            faded = (120, 120, 120)
+            pygame.draw.rect(screen, faded, pygame.Rect(x - 27, y + 23, 14, 12), 1)
+            pygame.draw.rect(screen, faded, pygame.Rect(x + 13, y + 23, 14, 12), 1)
+            
         elif count == 1:
             x, y = self.location
             black = (0, 0, 0)
@@ -78,18 +72,34 @@ class Goalpost(Object):
             head = (ground_left[0] - 2, ground_left[1] - 6)
             pygame.draw.circle(screen, skin, head, 6)
             pygame.draw.circle(screen, black, head, 6, 1)
+            
         else:
             x, y = self.location
-            faded = (120, 120, 120)
-            pygame.draw.rect(screen, faded, pygame.Rect(x - 27, y + 23, 14, 12), 1)
-            pygame.draw.rect(screen, faded, pygame.Rect(x + 13, y + 23, 14, 12), 1)
+            soldier_color = (255, 255, 255)
+            line_color = (0, 0, 0)
+
+            left_soldier_x = x - 20
+            right_soldier_x = x + 20
+            soldier_top_y = y - 35
+            soldier_bottom_y = y + 35
+
+            pygame.draw.rect(screen, soldier_color, pygame.Rect(left_soldier_x - 5, soldier_top_y, 10, 70))
+            pygame.draw.circle(screen, (0, 0, 0), (left_soldier_x, soldier_top_y - 8), 7)
+
+            pygame.draw.rect(screen, soldier_color, pygame.Rect(right_soldier_x - 5, soldier_top_y, 10, 70))
+            pygame.draw.circle(screen, (0, 0, 0), (right_soldier_x, soldier_top_y - 8), 7)
+
+            pygame.draw.line(screen, line_color, (left_soldier_x, soldier_top_y + 10), (right_soldier_x, soldier_top_y + 10), 2)
+            pygame.draw.rect(screen, line_color, pygame.Rect(left_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
+            pygame.draw.rect(screen, line_color, pygame.Rect(right_soldier_x - 7, soldier_bottom_y - 12, 14, 12), 1)
+            
 
         #골 번호
         x, y = self.location
         number_text = pygame.font.SysFont("malgungothic", 22).render(str(self.order), True, (0, 0, 0))
         number_rect = number_text.get_rect(center=(x, y + 55))
         screen.blit(number_text, number_rect)
-        
+
 
     def draw_goal_markers(self, screen, players):
         time = pygame.time.get_ticks() / 300

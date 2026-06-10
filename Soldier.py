@@ -2,13 +2,14 @@ from Object import Object
 
 
 class Soldier(Object):
-    COOLDOWN_TURNS = 3  # 여왕이 빼간 뒤 다시 배치 가능해지기까지의 턴 수
+    COOLDOWN_TURNS = 3
 
-    def __init__(self, match=None, assignedGoal=None):
+    def __init__(self, match, assignedGoal):
         super().__init__()
         self.match = match
         self.assignedGoal = assignedGoal
-        self.leftTurn = -self.COOLDOWN_TURNS  # 처음엔 바로 배치 가능
+        self.leftTurn = -self.COOLDOWN_TURNS
+        self.assign(assignedGoal)
 
     def update_cooldown(self, currentTurn):
         if not self.usable and currentTurn - self.leftTurn >= self.COOLDOWN_TURNS:

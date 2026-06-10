@@ -11,7 +11,7 @@ class Flamingo(Object):
         self.match = match
 
         self.hp = 100
-        self.maxDistance = random.randint(30, 50)
+        self.maxPower = random.randint(10, 15)
         self.__stiffness = random.randint(70, 100)
 
         # 조작 관련
@@ -21,15 +21,12 @@ class Flamingo(Object):
 
         # 애니메이션 관련
         self.swing_start_time = 0
-        self.swing_duration = 300
         self.swing_hit_done = False
         self.swing_pending_velocity = (0, 0)
-        self.flamingo_charge_angle = 0
+        self.charge_angle = 0
 
         # 차징 관련
         self.max_hold_time = 2000
-        self.min_power = 2.5
-        self.max_power = self.maxDistance * 0.12
 
     def hit(self, hedgehog, strength):
         damage = hedgehog.sharpness * strength / 5 * (1 - self.__stiffness / 100)
@@ -49,17 +46,17 @@ class Flamingo(Object):
         self.charging = True
         self.swinging = False
         self.mouse_down_time = pygame.time.get_ticks()
-        self.flamingo_charge_angle = math.atan2(my - by, mx - bx)
+        self.charge_angle = math.atan2(my - by, mx - bx)
 
-    def release_charge(self, ball):
+    def release_charge(self):
         if not self.charging or not self.usable:
             return
 
         hold_time = pygame.time.get_ticks() - self.mouse_down_time
         hold_ratio = min(hold_time / self.max_hold_time, 1)
 
-        power = self.min_power + (self.max_power - self.min_power) * hold_ratio
-        angle = self.flamingo_charge_angle
+        power = 8 + (self.maxPower - 8) * hold_ratio
+        angle = self.charge_angle
 
         #반대쪽으로 발사
         self.swing_pending_velocity = (
@@ -72,15 +69,15 @@ class Flamingo(Object):
         self.swinging = True
         self.charging = False
 
-        #여왕이랑 스케일 맞추려면 3배 곱해야 함
-        return power * 3
+        return power
 
     def update_swing(self, ball):
         if not self.swinging:
             return False
 
+        # swing은 애니메이션임
         elapsed = pygame.time.get_ticks() - self.swing_start_time
-        progress = min(elapsed / self.swing_duration, 1)
+        progress = min(elapsed / 300, 1)
 
         if progress >= 0.55 and not self.swing_hit_done:
             ball.velocity = self.swing_pending_velocity
@@ -99,13 +96,10 @@ class Flamingo(Object):
         dx = mx - bx
         dy = my - by
 
-        if math.hypot(dx, dy) == 0:
-            dx, dy = 1, 0
-
         aim_angle = math.atan2(dy, dx)
 
         if self.charging or self.swinging:
-            aim_angle = self.flamingo_charge_angle
+            aim_angle = self.charge_angle
 
         stand_angle = aim_angle + math.pi / 2
 
@@ -156,7 +150,7 @@ class Flamingo(Object):
 
         elif self.swinging:
             elapsed = pygame.time.get_ticks() - self.swing_start_time
-            progress = min(elapsed / self.swing_duration, 1)
+            progress = min(elapsed / 300, 1)
             eased = 1 - (1 - progress) * (1 - progress)
 
             start_tilt = math.pi * 0.42
@@ -182,7 +176,7 @@ class Flamingo(Object):
         neck_mid = (int(neck_mid[0]), int(neck_mid[1]))
         head_center = (int(head_center[0]), int(head_center[1]))
 
-        # 부리는 공 쪽을 향하게 함
+
         beak_angle = math.atan2(by - head_center[1], bx - head_center[0])
         bdx, bdy = math.cos(beak_angle), math.sin(beak_angle)
         bpx, bpy = -math.sin(beak_angle), math.cos(beak_angle)

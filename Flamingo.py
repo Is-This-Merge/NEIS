@@ -60,8 +60,8 @@ class Flamingo(Object):
 
         #반대쪽으로 발사
         self.swing_pending_velocity = (
-            -math.cos(angle) * power * 3,
-            -math.sin(angle) * power * 3
+            -math.cos(angle) * power * 2,
+            -math.sin(angle) * power * 2
         )
 
         self.swing_start_time = pygame.time.get_ticks()

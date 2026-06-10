@@ -7,7 +7,6 @@ import math
 class GamePlayer(Player):
     def __init__(self, match, location):
         super().__init__(match, (150, 75, 0), location)
-        # 마지막 배치 결과 (UI 표시)
 
     def assign_to_goal(self, goal_index):
         # 숫자키로 1명씩 배치

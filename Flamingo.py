@@ -11,7 +11,7 @@ class Flamingo(Object):
         self.match = match
 
         self.hp = 100
-        self.maxDistance = random.randint(9, 15)
+        self.maxPower = random.randint(10, 15)
         self.__stiffness = random.randint(70, 100)
 
         # 조작 관련
@@ -55,7 +55,7 @@ class Flamingo(Object):
         hold_time = pygame.time.get_ticks() - self.mouse_down_time
         hold_ratio = min(hold_time / self.max_hold_time, 1)
 
-        power = 7 + (self.maxDistance) * hold_ratio
+        power = 8 + (self.maxPower - 8) * hold_ratio
         angle = self.charge_angle
 
         #반대쪽으로 발사

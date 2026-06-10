@@ -47,7 +47,7 @@ class GamePlayer(Player):
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if flamingo.charging:
-                    strength = flamingo.release_charge(self.ball)
+                    strength = flamingo.release_charge()
 
                     if strength is not None:
                         flamingo.hit(self.ball, strength)

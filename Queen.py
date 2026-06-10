@@ -51,7 +51,7 @@ class Queen(Player):
         if length == 0:
             return True
 
-        power = random.uniform(8, 14)
+        power = random.uniform(8, flamingo.maxPower)
         velocity = (dx / length * power, dy / length * power)
 
         angle_to_goal = math.atan2(dy, dx)

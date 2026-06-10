@@ -18,7 +18,7 @@ class Goalpost(Object):
     def removeSoldier(self, soldier):
         if soldier in self.soldiers:
             self.soldiers.remove(soldier)
-        if len(self.soldiers):
+        if len(self.soldiers) == 0:
             self.usable = 0
 
     def getHitBox(self):
@@ -72,7 +72,7 @@ class Goalpost(Object):
             head = (ground_left[0] - 2, ground_left[1] - 6)
             pygame.draw.circle(screen, skin, head, 6)
             pygame.draw.circle(screen, black, head, 6, 1)
-            
+
         else:
             x, y = self.location
             soldier_color = (255, 255, 255)

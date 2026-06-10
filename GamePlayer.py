@@ -1,8 +1,6 @@
 from Player import Player
 
 import pygame
-import math
-
 
 class GamePlayer(Player):
     def __init__(self, match, location):
